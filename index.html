@@ -177,10 +177,14 @@
   ::placeholder{color:#A9B4C0;}
 
   @media print{
-    header,nav,.no-print{display:none!important;}
-    body{background:#fff;}
-    main{padding:0;max-width:100%;}
-  }
+     header,nav,.no-print{display:none!important;}
+     body{background:#fff;}
+     main{padding:0;max-width:100%;}
+     .modal-bg{position:static!important;overflow:visible!important;padding:0!important;background:none!important;display:block!important;height:auto!important;}
+     .modal{box-shadow:none!important;max-width:100%!important;border-radius:0!important;padding:0!important;}
+     .modal-close, .modal-actions{display:none!important;}
+     .modal h3{display:none!important;}
+   }
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
