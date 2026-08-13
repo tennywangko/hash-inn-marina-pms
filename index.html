@@ -343,7 +343,16 @@ async function loadOrSeed(){
       .eq('id', PMS_ROW_ID)
       .maybeSingle();
     if(error) throw error;
-    if(data && data.data){ DB = data.data; await migrateRoomPlanIfNeeded(); await migratePackagesIfNeeded(); await migrateStaffIfNeeded(); return; }
+    if(data && data.data){
+  DB = data.data;
+  DB.guests = DB.guests || [];
+  DB.bookings = DB.bookings || [];
+  DB.rooms = DB.rooms || [];
+  DB.packages = DB.packages || [];
+  DB.staff = DB.staff || [];
+  DB.settings = DB.settings || {};
+  await migrateRoomPlanIfNeeded(); await migratePackagesIfNeeded(); await migrateStaffIfNeeded(); return;
+}
     DB = seed();
     await persist();
   }catch(e){
