@@ -546,6 +546,13 @@ async function render(){
     app.innerHTML = renderLoginScreen();
     return;
   }
+  const active = document.activeElement;
+  let focusId = null, selStart = null, selEnd = null;
+  if(active && active.id && ['INPUT','TEXTAREA'].includes(active.tagName)){
+    focusId = active.id;
+    selStart = active.selectionStart;
+    selEnd = active.selectionEnd;
+  }
   app.innerHTML = `
     ${renderHeader()}
     ${UI.saveError ? `
@@ -557,6 +564,15 @@ async function render(){
     <main>${renderTab()}</main>
     ${UI.modal ? renderModalWrap() : ''}
   `;
+  if(focusId){
+    const el = document.getElementById(focusId);
+    if(el){
+      el.focus();
+      if(selStart!=null && el.setSelectionRange){
+        try{ el.setSelectionRange(selStart, selEnd); }catch(e){}
+      }
+    }
+  }
 }
 
 function renderLoginScreen(){
@@ -1455,7 +1471,7 @@ function renderGuests(){
   return `
   <h2 class="page-title">${tr('guests_title')}</h2>
   <div class="toolbar">
-    <div class="search-box"><input type="text" placeholder="${tr('search_guest')}" value="${esc(UI.guestSearch)}" oninput="UI.guestSearch=this.value;render()"></div>
+    <div class="search-box"><input type="text"id="guestSearchInput" placeholder="${tr('search_guest')}" value="${esc(UI.guestSearch)}" oninput="UI.guestSearch=this.value;render()"></div>
   </div>
   <div class="card">
     <table>
@@ -1570,7 +1586,7 @@ function renderBilling(){
   <h2 class="page-title">${tr('billing_title')}</h2>
   ${isFnb ? `<div class="notice">${tr('billing_fnb_notice')}</div>` : ''}
   <div class="toolbar">
-    <div class="search-box"><input type="text" placeholder="${tr('search_billing')}" value="${esc(UI.billSearch)}" oninput="UI.billSearch=this.value;render()"></div>
+    <div class="search-box"><input type="text"id="billSearchInput" placeholder="${tr('search_billing')}" value="${esc(UI.billSearch)}" oninput="UI.billSearch=this.value;render()"></div>
   </div>
   <div class="card">
     <table>
