@@ -179,27 +179,36 @@
   @media print{
     header,nav,.no-print{display:none!important;}
     body{background:#fff;}
-    main{padding:0;max-width:100%;}
+    main{display:none!important;}
+    .modal-bg{position:static!important;overflow:visible!important;padding:0!important;background:none!important;display:block!important;height:auto!important;}
+    .modal{box-shadow:none!important;max-width:100%!important;border-radius:0!important;padding:0!important;}
+    .modal-close, .modal-actions{display:none!important;}
+    .modal h3{display:none!important;}
+    .reg-head>div{padding:8px 14px!important;}
+    .reg-instruction{padding:4px 14px!important;}
+    .reg-section{padding:4px 14px!important;}
+    .reg-cell{padding:3px 14px!important;}
+    .reg-ack{padding:6px 14px!important;font-size:8.5px!important;line-height:1.25!important;}
+    .reg-sig-row .reg-cell{padding-top:55px!important;border:1px solid #999!important;}
+    .reg-internal{padding:4px 14px!important;font-size:9px!important;gap:8px!important;}
   }
+  @page{ margin:10mm; }
 </style>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
 </head>
 <body>
 <div id="app"></div>
 
 <script>
 /* ============================= STORAGE (Supabase) ============================= */
-/*
-  SETUP REQUIRED: paste your own Supabase project URL and anon key below.
-  See the accompanying SUPABASE_MIGRATION_SETUP.md guide for step-by-step
-  instructions on creating the project, table, security policies, and
-  getting these values.
-*/
 const SUPABASE_URL = "PASTE_YOUR_SUPABASE_URL_HERE";
 const SUPABASE_ANON_KEY = "PASTE_YOUR_SUPABASE_ANON_KEY_HERE";
-const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-const PMS_ROW_ID = 1; // fixed row holding the entire dataset as one JSON blob
+const SUPABASE_CONFIGURED = !SUPABASE_URL.includes('PASTE_YOUR') && !SUPABASE_ANON_KEY.includes('PASTE_YOUR');
+const supabaseClient = SUPABASE_CONFIGURED ? supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
+const PMS_ROW_ID = 1;
 
 let DB = null;
 let UI = { role:'manager', tab:'dashboard', modal:null, calOffset:0, hkFilter:'dirty', billSearch:'', guestSearch:'', lang:'en', session:null, loginError:'', saveError:false };
@@ -211,13 +220,10 @@ async function ensureAuth(){
     if(error) console.error('anonymous sign-in failed', error);
   }
 }
-
 async function persist(){
   try{
     await ensureAuth();
-    const { error } = await supabaseClient
-      .from('pms_data')
-      .upsert({ id: PMS_ROW_ID, data: DB, updated_at: new Date().toISOString() });
+    const { error } = await supabaseClient.from('pms_data').upsert({ id: PMS_ROW_ID, data: DB, updated_at: new Date().toISOString() });
     if(error) throw error;
     UI.saveError = false;
     return true;
@@ -336,13 +342,14 @@ function setLang(l){ UI.lang = l; render(); }
 async function loadOrSeed(){
   try{
     await ensureAuth();
-    const { data, error } = await supabaseClient
-      .from('pms_data')
-      .select('data')
-      .eq('id', PMS_ROW_ID)
-      .maybeSingle();
+    const { data, error } = await supabaseClient.from('pms_data').select('data').eq('id', PMS_ROW_ID).maybeSingle();
     if(error) throw error;
-    if(data && data.data){ DB = data.data; await migrateRoomPlanIfNeeded(); await migratePackagesIfNeeded(); await migrateStaffIfNeeded(); return; }
+    if(data && data.data){
+      DB = data.data;
+      DB.guests = DB.guests || []; DB.bookings = DB.bookings || []; DB.rooms = DB.rooms || [];
+      DB.packages = DB.packages || []; DB.staff = DB.staff || []; DB.settings = DB.settings || {};
+      await migrateRoomPlanIfNeeded(); await migratePackagesIfNeeded(); await migrateStaffIfNeeded(); return;
+    }
     DB = seed();
     await persist();
   }catch(e){
@@ -536,6 +543,13 @@ async function render(){
     app.innerHTML = renderLoginScreen();
     return;
   }
+  const active = document.activeElement;
+  let focusId = null, selStart = null, selEnd = null;
+  if(active && active.id && ['INPUT','TEXTAREA'].includes(active.tagName)){
+    focusId = active.id;
+    selStart = active.selectionStart;
+    selEnd = active.selectionEnd;
+  }
   app.innerHTML = `
     ${renderHeader()}
     ${UI.saveError ? `
@@ -547,6 +561,15 @@ async function render(){
     <main>${renderTab()}</main>
     ${UI.modal ? renderModalWrap() : ''}
   `;
+  if(focusId){
+    const el = document.getElementById(focusId);
+    if(el){
+      el.focus();
+      if(selStart!=null && el.setSelectionRange){
+        try{ el.setSelectionRange(selStart, selEnd); }catch(e){}
+      }
+    }
+  }
 }
 
 function renderLoginScreen(){
@@ -599,27 +622,18 @@ let liveListenerActive = false;
 let liveChannel = null;
 function startLivePolling(){
   if(liveListenerActive) return;
-  liveChannel = supabaseClient
-    .channel('pms_data_changes')
+  liveChannel = supabaseClient.channel('pms_data_changes')
     .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'pms_data', filter: `id=eq.${PMS_ROW_ID}` }, (payload) => {
       if(!UI.session || UI.modal) return;
       const active = document.activeElement;
       if(active && ['INPUT','TEXTAREA','SELECT'].includes(active.tagName)) return;
       const val = payload.new && payload.new.data;
-      if(val && JSON.stringify(val) !== JSON.stringify(DB)){
-        DB = val;
-        render();
-      }
-    })
-    .subscribe();
+      if(val && JSON.stringify(val) !== JSON.stringify(DB)){ DB = val; render(); }
+    }).subscribe();
   liveListenerActive = true;
 }
 function stopLivePolling(){
-  if(liveListenerActive && liveChannel){
-    supabaseClient.removeChannel(liveChannel);
-    liveListenerActive = false;
-    liveChannel = null;
-  }
+  if(liveListenerActive && liveChannel){ supabaseClient.removeChannel(liveChannel); liveListenerActive=false; liveChannel=null; }
 }
 
 function renderHeader(){
@@ -1445,7 +1459,7 @@ function renderGuests(){
   return `
   <h2 class="page-title">${tr('guests_title')}</h2>
   <div class="toolbar">
-    <div class="search-box"><input type="text" placeholder="${tr('search_guest')}" value="${esc(UI.guestSearch)}" oninput="UI.guestSearch=this.value;render()"></div>
+    <div class="search-box"><input type="text" id="guestSearchInput" placeholder="${tr('search_guest')}" value="${esc(UI.guestSearch)}" oninput="UI.guestSearch=this.value;render()"></div>
   </div>
   <div class="card">
     <table>
@@ -1560,7 +1574,7 @@ function renderBilling(){
   <h2 class="page-title">${tr('billing_title')}</h2>
   ${isFnb ? `<div class="notice">${tr('billing_fnb_notice')}</div>` : ''}
   <div class="toolbar">
-    <div class="search-box"><input type="text" placeholder="${tr('search_billing')}" value="${esc(UI.billSearch)}" oninput="UI.billSearch=this.value;render()"></div>
+    <div class="search-box"><input type="text" id="billSearchInput" placeholder="${tr('search_billing')}" value="${esc(UI.billSearch)}" oninput="UI.billSearch=this.value;render()"></div>
   </div>
   <div class="card">
     <table>
@@ -2027,9 +2041,11 @@ function renderSettings(){
     </div>
     <div class="field"><label>Address</label><input type="text" id="stAddr" value="${esc(s.hotelAddr)}" style="width:100%;"></div>
   </div>
-  <div style="margin-top:14px;display:flex;gap:8px;">
+  <div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap;">
     <button class="btn" onclick="saveSettings()">Save Settings</button>
-    <button class="btn danger" onclick="resetData()">Reset All Data</button>
+    <button class="btn secondary" onclick="openBulkImport()">Bulk Import Bookings (CSV)</button>
+    <button class="btn danger" onclick="openStartFresh()">Start Fresh — Go Live</button>
+    <button class="btn danger" onclick="resetData()">Reset to Demo Data</button>
   </div>
   <div class="card" style="margin-top:14px;">
     <div class="toolbar" style="margin-bottom:0;">
@@ -2080,6 +2096,16 @@ function renderSettings(){
     </div>
     <button class="btn secondary" onclick="exportRevenueExcel()">Export Revenue to Excel (.xlsx)</button>
     <div class="small muted" style="margin-top:10px;">This covers revenue transactions only — cash/bank balances, receivables, fixed assets, and liabilities still need to come from your accounting records.</div>
+  </div>
+
+  <div class="card" style="margin-top:14px;">
+    <strong style="color:var(--navy);font-size:13.5px;">Monthly Management Report</strong>
+    <div class="small muted" style="margin-top:4px;">A full month at a glance for management and finance review — occupancy, ADR/RevPAR, payment method reconciliation, room performance, guest origin, and outstanding balances, all in one Excel file with a sheet each.</div>
+    <div class="row2" style="margin-top:10px;">
+      <div class="field"><label>Month</label><input type="month" id="mgrMonth" value="${todayStr().slice(0,7)}"></div>
+      <div class="field" style="display:flex;align-items:flex-end;"><button class="btn" onclick="generateMonthlyReport()" style="width:100%;justify-content:center;">Generate Monthly Report</button></div>
+    </div>
+    <div class="small muted" style="margin-top:10px;">Eight sheets: Overview, Daily Breakdown, Payment Reconciliation, Transactions, Booking Log, Guest Origin, Room Performance, and Outstanding Balances.</div>
   </div>
 
   <div class="card" style="margin-top:14px;">
@@ -2384,7 +2410,218 @@ async function resetData(){
   await persist();
   render();
 }
+function openStartFresh(){
+  UI.modal = {
+    title:'Start Fresh — Go Live',
+    wide:true,
+    body:`
+      <div class="warn">This clears all Bookings and Guests to begin real operation. This cannot be undone — download a backup first if you haven't already.</div>
+      <div class="field"><label>What gets cleared</label>
+        <ul style="margin:4px 0 0 18px;padding:0;font-size:13px;color:var(--text);">
+          <li>All bookings (including the demo/sample ones)</li>
+          <li>All guests (including the demo/sample ones)</li>
+          <li>The audit log</li>
+        </ul>
+      </div>
+      <div class="field"><label>What's kept, unchanged</label>
+        <ul style="margin:4px 0 0 18px;padding:0;font-size:13px;color:var(--text);">
+          <li>Your real 47-room Room Plan (numbers, floors, bed types)</li>
+          <li>Packages, rates, and hotel settings</li>
+          <li>Staff accounts and PINs</li>
+        </ul>
+      </div>
+      <div class="notice">Every room's housekeeping status will reset to Clean. Walk the property afterward and mark any room that's actually Dirty, Out of Order, or House Use right now — the system won't know unless you tell it.</div>
+      <div class="field"><label>Type DELETE to confirm</label><input type="text" id="sfConfirm" placeholder="DELETE"></div>
+    `,
+    actions:`<button class="btn ghost" onclick="closeModal()">Cancel</button><button class="btn danger" onclick="saveStartFresh()">Clear Bookings & Guests</button>`
+  };
+  render();
+}
+function saveStartFresh(){
+  const val = document.getElementById('sfConfirm').value.trim();
+  if(val!=='DELETE'){ alert('Please type DELETE exactly to confirm.'); return; }
+  const bookingCount = DB.bookings.length, guestCount = DB.guests.length;
+  DB.bookings = [];
+  DB.guests = [];
+  DB.auditLog = [];
+  DB.rooms.forEach(r=>{ r.hk='clean'; r.oooReason=''; r.cleaningStaff=''; r.cleaningStartedAt=''; r.cleaningFinishedAt=''; r.inspectedBy=''; r.inspectedAt=''; });
+  logAudit('start_fresh', `Cleared ${bookingCount} booking(s) and ${guestCount} guest(s) to begin real operation.`);
+  persist(); UI.modal=null; render();
+}
+
+/* ============================= BULK IMPORT (CSV) ============================= */
+let pendingImportRows = [];
+function openBulkImport(){
+  UI.modal = {
+    title:'Bulk Import Bookings (CSV)',
+    wide:true,
+    body:`
+      <div class="notice">Import active bookings from a CSV file exported from Excel. Download the template first to get the right column format — fill it in, save as CSV, then upload it here.</div>
+      <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;">
+        <button class="btn secondary" onclick="downloadImportTemplate()">Download CSV Template</button>
+      </div>
+      <div class="field"><label>Upload Filled CSV</label>
+        <input type="file" accept=".csv" id="importFileInput" onchange="handleImportFile(this)">
+      </div>
+      <div id="importPreviewArea"></div>
+    `,
+    actions:`<button class="btn ghost" onclick="closeModal()">Close</button>`
+  };
+  render();
+}
+function downloadImportTemplate(){
+  const headers = ['GuestName','Phone','Origin','Email','IDNumber','RoomNumber','CheckIn','CheckOut','Pax','RoomRate','Status','Package','BookingSource','Deposit','Notes'];
+  const example = ['Rivaldo Manoppo','0812-4300-1122','Sangihe','','','204','2026-08-13','2026-08-15','1','250000','checked_in','','Walk-in','0','Delete this example row before importing'];
+  const example2 = ['Sefti Tatengkeng','','','','','305','2026-01-01','2026-01-02','1','250000','checked_out','','Walk-in','0','Historical booking — use checked_out for past stays already completed'];
+  const csv = headers.join(',') + '\n' + [example,example2].map(row=>row.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob = new Blob([csv], {type:'text/csv'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'hash-inn-marina-booking-import-template.csv';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+function handleImportFile(input){
+  const file = input.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = (e)=>{
+    Papa.parse(e.target.result, {
+      header:true,
+      skipEmptyLines:true,
+      complete: (results)=>{ processImportRows(results.data); }
+    });
+  };
+  reader.readAsText(file);
+}
+function processImportRows(rows){
+  const validRows = [];
+  const errorRows = [];
+  rows.forEach((row, idx)=>{
+    const rowNum = idx+2;
+    const name = (row.GuestName||'').trim();
+    const roomNum = (row.RoomNumber||'').trim();
+    const checkIn = (row.CheckIn||'').trim();
+    const checkOut = (row.CheckOut||'').trim();
+    const rate = parseInt(row.RoomRate)||0;
+    const errors = [];
+    if(!name) errors.push('Missing GuestName');
+    if(!roomNum) errors.push('Missing RoomNumber');
+    else if(!room(roomNum)) errors.push(`Room ${roomNum} does not exist`);
+    if(!checkIn || !/^\d{4}-\d{2}-\d{2}$/.test(checkIn)) errors.push('CheckIn must be YYYY-MM-DD');
+    if(!checkOut || !/^\d{4}-\d{2}-\d{2}$/.test(checkOut)) errors.push('CheckOut must be YYYY-MM-DD');
+    if(checkIn && checkOut && checkOut<=checkIn) errors.push('CheckOut must be after CheckIn');
+    if(!rate) errors.push('Missing or invalid RoomRate');
+    const status = (row.Status||'reserved').trim().toLowerCase();
+    if(!['reserved','checked_in','checked_out'].includes(status)) errors.push('Status must be "reserved", "checked_in", or "checked_out"');
+
+    if(errors.length){
+      errorRows.push({rowNum, name: name||'(blank)', errors});
+    } else {
+      validRows.push({
+        name, phone:(row.Phone||'').trim(), origin:(row.Origin||'').trim(), email:(row.Email||'').trim(), idNumber:(row.IDNumber||'').trim(),
+        roomNumber:roomNum, checkIn, checkOut, pax: parseInt(row.Pax)||1, roomRate:rate, status,
+        packageName:(row.Package||'').trim(), bookingSource:(row.BookingSource||'Walk-in').trim()||'Walk-in',
+        deposit: parseInt(row.Deposit)||0, notes:(row.Notes||'').trim()
+      });
+    }
+  });
+  pendingImportRows = validRows;
+  renderImportPreview(validRows, errorRows);
+}
+function renderImportPreview(validRows, errorRows){
+  const area = document.getElementById('importPreviewArea');
+  if(!area) return;
+  area.innerHTML = `
+    <div class="grid grid-2" style="margin:14px 0;">
+      <div class="card kpi"><div class="label">Ready to Import</div><div class="value" style="color:var(--green)">${validRows.length}</div></div>
+      <div class="card kpi"><div class="label">Rows with Errors</div><div class="value" style="color:var(--red)">${errorRows.length}</div></div>
+    </div>
+    ${errorRows.length ? `
+    <div class="warn">
+      <strong>These rows will be skipped:</strong>
+      <table style="margin-top:8px;"><thead><tr><th>Row</th><th>Guest</th><th>Errors</th></tr></thead><tbody>
+      ${errorRows.map(r=>`<tr><td>${r.rowNum}</td><td>${esc(r.name)}</td><td class="small">${esc(r.errors.join('; '))}</td></tr>`).join('')}
+      </tbody></table>
+    </div>` : ''}
+    ${validRows.length ? `
+    <table style="margin-top:8px;"><thead><tr><th>Guest</th><th>Room</th><th>Check-in</th><th>Check-out</th><th>Rate</th><th>Status</th></tr></thead><tbody>
+      ${validRows.map(r=>`<tr><td>${esc(r.name)}</td><td>${r.roomNumber}</td><td>${fmtDate(r.checkIn)}</td><td>${fmtDate(r.checkOut)}</td><td>${money(r.roomRate)}</td><td>${r.status.replace('_',' ')}</td></tr>`).join('')}
+    </tbody></table>
+    <button class="btn" style="margin-top:12px;" onclick="confirmBulkImport()">Import ${validRows.length} Booking(s)</button>
+    ` : '<div class="muted small" style="margin-top:10px;">No valid rows to import.</div>'}
+  `;
+}
+function confirmBulkImport(){
+  if(!pendingImportRows.length) return;
+  if(!confirm(`Import ${pendingImportRows.length} booking(s) and their guests? This adds to your existing data — it does not replace anything.`)) return;
+  let created=0, reused=0;
+  pendingImportRows.forEach(r=>{
+    let guest = DB.guests.find(g => g.name.toLowerCase()===r.name.toLowerCase() && (g.phone||'')===r.phone);
+    if(!guest){
+      guest = {id:uid('g'), name:r.name, phone:r.phone, origin:r.origin, email:r.email, idNumber:r.idNumber, idType:'', address:'', city:'', vehicleNo:'', emergencyContact:'', notes:''};
+      DB.guests.push(guest);
+      created++;
+    } else reused++;
+    const pkg = r.packageName ? DB.packages.find(p=>p.name.toLowerCase()===r.packageName.toLowerCase()) : null;
+    const paymentMatch = /Paid via ([^|]+)/.exec(r.notes||'');
+    DB.bookings.push({
+      id: uid('bk'), roomNumber:r.roomNumber, guestId:guest.id, pax:r.pax,
+      checkIn:r.checkIn, checkOut:r.checkOut, status:r.status, stayType:'overnight',
+      roomRate:r.roomRate, packageId: pkg?pkg.id:null, packageName: pkg?pkg.name:'', packagePrice: pkg?pkg.price:0,
+      breakfast: !!pkg, bookingSource:r.bookingSource, deposit:r.deposit, charges:[],
+      paid: r.status==='checked_out', paymentMethod: r.status==='checked_out' && paymentMatch ? paymentMatch[1].trim() : undefined,
+      notes:r.notes
+    });
+  });
+  logAudit('bulk_import', `Imported ${pendingImportRows.length} booking(s) via CSV (${created} new guest(s) created, ${reused} matched to existing guests).`);
+  pendingImportRows = [];
+  persist();
+  alert(`Import complete — ${created+reused} booking(s) added.`);
+  closeModal();
+}
 function startOfMonth(){ const d=new Date(); return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-01'; }
+
+/* ============================= EXCEL STYLING HELPER ============================= */
+const XL_NAVY = '0B2A4A';
+const XL_ACCENT_SOFT = 'E9F3FB';
+const XL_BORDER = 'D9E2EC';
+const XL_THIN_BORDER = {
+  top:{style:'thin',color:{rgb:XL_BORDER}}, bottom:{style:'thin',color:{rgb:XL_BORDER}},
+  left:{style:'thin',color:{rgb:XL_BORDER}}, right:{style:'thin',color:{rgb:XL_BORDER}}
+};
+// Applies professional styling to a worksheet built via XLSX.utils.aoa_to_sheet.
+// titleRows: 0-indexed rows styled as a bold navy report title (no borders/zebra)
+// headerRows: 0-indexed rows styled as navy-filled, white bold column headers
+// moneyCols: 0-indexed columns formatted as IDR currency (right-aligned, "Rp " prefix)
+// plainNumCols: 0-indexed columns formatted as plain thousands-separated numbers (no "Rp")
+function styleWorksheet(ws, {titleRows=[], headerRows=[], moneyCols=[], plainNumCols=[]}={}){
+  if(!ws['!ref']) return;
+  const range = XLSX.utils.decode_range(ws['!ref']);
+  for(let R=range.s.r; R<=range.e.r; R++){
+    for(let C=range.s.c; C<=range.e.c; C++){
+      const addr = XLSX.utils.encode_cell({r:R,c:C});
+      const cell = ws[addr];
+      if(!cell) continue;
+      if(titleRows.includes(R)){
+        cell.s = { font:{ name:'Calibri', sz: R===titleRows[0]?14:10, bold:true, color:{rgb: R===titleRows[0]?XL_NAVY:'66768A'} } };
+      } else if(headerRows.includes(R)){
+        cell.s = { font:{ name:'Calibri', sz:10, bold:true, color:{rgb:'FFFFFF'} }, fill:{ fgColor:{rgb:XL_NAVY} },
+                   alignment:{ vertical:'center', horizontal:'center', wrapText:true }, border:XL_THIN_BORDER };
+      } else {
+        const zebra = (R % 2 === 0);
+        const style = { font:{ name:'Calibri', sz:10 }, border:XL_THIN_BORDER, alignment:{ vertical:'center' } };
+        if(zebra) style.fill = { fgColor:{rgb:XL_ACCENT_SOFT} };
+        if(moneyCols.includes(C) && typeof cell.v === 'number'){
+          style.numFmt = '"Rp "#,##0'; style.alignment = { vertical:'center', horizontal:'right' };
+        } else if(plainNumCols.includes(C) && typeof cell.v === 'number'){
+          style.numFmt = '#,##0.#'; style.alignment = { vertical:'center', horizontal:'right' };
+        }
+        cell.s = style;
+      }
+    }
+  }
+}
 
 function computeRevenueLines(startDate, endDate){
   const lines = [];
@@ -2415,6 +2652,31 @@ function computeRevenueLines(startDate, endDate){
   return lines;
 }
 
+function computeOmsetStyleRows(startDate, endDate){
+  const rows = [];
+  DB.bookings
+    .filter(b => b.checkIn >= startDate && b.checkIn <= endDate)
+    .sort((a,b)=> a.checkIn.localeCompare(b.checkIn))
+    .forEach((b, i) => {
+      const g = guestById(b.guestId);
+      const total = folioTotal(b);
+      const pm = (b.paymentMethod||'').toLowerCase();
+      let postpaid=0, bca=0, qris=0, transfer=0;
+      if(pm.includes('cash') || pm.includes('postpaid')) postpaid = total;
+      else if(pm.includes('bca')) bca = total;
+      else if(pm.includes('qris')) qris = total;
+      else if(pm.includes('transfer')) transfer = total;
+      else postpaid = total; // default bucket when payment method wasn't recorded
+      rows.push({
+        no: i+1, tgl: b.checkIn, name: g?g.name:'—', pax: b.pax, room: b.roomNumber,
+        checkIn: b.checkIn, checkOut: b.checkOut, checkInTime: '',
+        postpaid, bca, qris, transfer,
+        bookingId: b.id, phone: g?g.phone:''
+      });
+    });
+  return rows;
+}
+
 function exportRevenueExcel(){
   const start = document.getElementById('repStart').value;
   const end = document.getElementById('repEnd').value;
@@ -2442,14 +2704,196 @@ function exportRevenueExcel(){
   const txRows = [['Date','Room','Guest','Category','Description','Amount (IDR)']];
   lines.forEach(l=> txRows.push([l.date, l.room, l.guest, l.category, l.description, l.amount]));
 
+  const omsetRows = [['NO','TGL','Nama Tamu','Jumlah Tamu','Room','TGL Check In','TGL Check Out','Jam Check in','Postpaid','BCA','QRIS','TRANSFER','ID Booking','No. Telp']];
+  computeOmsetStyleRows(start, end).forEach(r=>{
+    omsetRows.push([r.no, r.tgl, r.name, r.pax, r.room, r.checkIn, r.checkOut, r.checkInTime, r.postpaid||'', r.bca||'', r.qris||'', r.transfer||'', r.bookingId, r.phone]);
+  });
+
   const wb = XLSX.utils.book_new();
   const wsSummary = XLSX.utils.aoa_to_sheet(summaryRows);
-  wsSummary['!cols'] = [{wch:30},{wch:18}];
+  wsSummary['!cols'] = [{wch:34},{wch:18}];
+  styleWorksheet(wsSummary, { titleRows:[0,1,2], headerRows:[4], moneyCols:[1] });
   const wsTx = XLSX.utils.aoa_to_sheet(txRows);
   wsTx['!cols'] = [{wch:12},{wch:8},{wch:22},{wch:14},{wch:32},{wch:14}];
+  styleWorksheet(wsTx, { headerRows:[0], moneyCols:[5] });
+  const wsOmset = XLSX.utils.aoa_to_sheet(omsetRows);
+  wsOmset['!cols'] = [{wch:5},{wch:12},{wch:22},{wch:10},{wch:8},{wch:12},{wch:12},{wch:10},{wch:12},{wch:12},{wch:12},{wch:12},{wch:12},{wch:16}];
+  styleWorksheet(wsOmset, { headerRows:[0], moneyCols:[8,9,10,11] });
   XLSX.utils.book_append_sheet(wb, wsSummary, 'Summary');
   XLSX.utils.book_append_sheet(wb, wsTx, 'Transactions');
+  XLSX.utils.book_append_sheet(wb, wsOmset, 'Booking Log');
   XLSX.writeFile(wb, `HashInnMarina-Revenue-${start}_to_${end}.xlsx`);
+}
+
+/* ============================= MONTHLY MANAGEMENT REPORT ============================= */
+function monthBounds(monthStr){
+  // monthStr like "2026-08"
+  const [y,m] = monthStr.split('-').map(Number);
+  const start = `${y}-${pad(m)}-01`;
+  const lastDay = new Date(y, m, 0).getDate();
+  const end = `${y}-${pad(m)}-${pad(lastDay)}`;
+  return {start, end, lastDay};
+}
+function paymentBucket(methodStr){
+  const pm = (methodStr||'').toLowerCase();
+  if(pm.includes('cash') || pm.includes('postpaid')) return 'Postpaid/Cash';
+  if(pm.includes('bca')) return 'BCA';
+  if(pm.includes('qris')) return 'QRIS';
+  if(pm.includes('transfer')) return 'Transfer';
+  return 'Other/Unrecorded';
+}
+function computeDailyBreakdown(startDate, endDate){
+  const totalRooms = DB.rooms.length;
+  const days = [];
+  let d = startDate;
+  while(d <= endDate){
+    let occRooms = 0, roomRevenue = 0, otherRevenue = 0;
+    DB.bookings.forEach(b=>{
+      if(b.status==='cancelled' || b.status==='no_show') return;
+      const covers = b.stayType==='dayuse' ? (d===b.checkIn) : (d>=b.checkIn && d<b.checkOut);
+      if(!covers) return;
+      occRooms++;
+      roomRevenue += b.roomRate;
+      if(b.packageId && d===b.checkIn) otherRevenue += (b.packagePrice||0);
+      (b.charges||[]).forEach(c=>{ if(c.date===d) otherRevenue += c.amount*c.qty; });
+    });
+    days.push({ date:d, occRooms, occPct: totalRooms?Math.round((occRooms/totalRooms)*100):0, roomRevenue, otherRevenue, total: roomRevenue+otherRevenue });
+    d = addDays(d,1);
+  }
+  return days;
+}
+function computePaymentMethodTotals(startDate, endDate){
+  const totals = {'Postpaid/Cash':0,'BCA':0,'QRIS':0,'Transfer':0,'Other/Unrecorded':0};
+  DB.bookings.filter(b=>b.status==='checked_out' && b.checkOut>=startDate && b.checkOut<=endDate).forEach(b=>{
+    totals[paymentBucket(b.paymentMethod)] += folioTotal(b);
+  });
+  return totals;
+}
+function computeGuestOriginBreakdown(startDate, endDate){
+  const byOrigin = {};
+  DB.bookings.filter(b=>b.checkIn>=startDate && b.checkIn<=endDate && b.status!=='cancelled' && b.status!=='no_show').forEach(b=>{
+    const g = guestById(b.guestId);
+    const origin = (g && g.origin) ? g.origin : 'Unspecified';
+    byOrigin[origin] = byOrigin[origin] || {count:0, revenue:0};
+    byOrigin[origin].count++;
+    byOrigin[origin].revenue += folioTotal(b);
+  });
+  return Object.keys(byOrigin).sort().map(o=>({ origin:o, count:byOrigin[o].count, revenue:byOrigin[o].revenue }));
+}
+function computeRoomPerformance(startDate, endDate){
+  const byRoom = {};
+  DB.rooms.forEach(r=>{ byRoom[r.number] = {type:r.type, bedType:r.bedType, nights:0, revenue:0}; });
+  let d = startDate;
+  while(d <= endDate){
+    DB.bookings.forEach(b=>{
+      if(b.status==='cancelled' || b.status==='no_show') return;
+      const covers = b.stayType==='dayuse' ? (d===b.checkIn) : (d>=b.checkIn && d<b.checkOut);
+      if(!covers) return;
+      if(!byRoom[b.roomNumber]) byRoom[b.roomNumber] = {type:'', bedType:'', nights:0, revenue:0};
+      byRoom[b.roomNumber].nights++;
+      byRoom[b.roomNumber].revenue += b.roomRate;
+    });
+    d = addDays(d,1);
+  }
+  return Object.keys(byRoom).sort((a,b)=>byRoom[b].revenue-byRoom[a].revenue)
+    .map(num=>({ room:num, type:byRoom[num].type, bedType:byRoom[num].bedType, nights:byRoom[num].nights, revenue:byRoom[num].revenue }));
+}
+function computeOutstandingBalances(startDate, endDate){
+  return DB.bookings.filter(b=> !b.paid && b.status!=='cancelled' && b.status!=='no_show' && b.checkOut>=startDate && b.checkOut<=endDate)
+    .map(b=>{
+      const g = guestById(b.guestId);
+      return { guest:g?g.name:'—', phone:g?g.phone:'', room:b.roomNumber, checkIn:b.checkIn, checkOut:b.checkOut, status:b.status, balance:folioTotal(b) };
+    });
+}
+function generateMonthlyReport(){
+  const monthStr = document.getElementById('mgrMonth').value;
+  if(!monthStr){ alert('Please choose a month.'); return; }
+  if(typeof XLSX === 'undefined'){ alert('The Excel export library did not load. Check your internet connection and try again.'); return; }
+  const {start, end, lastDay} = monthBounds(monthStr);
+  const monthLabel = new Date(start+'T00:00:00').toLocaleDateString('en-GB',{month:'long', year:'numeric'});
+
+  const lines = computeRevenueLines(start, end);
+  const catTotals = {};
+  lines.forEach(l=>{ catTotals[l.category] = (catTotals[l.category]||0) + l.amount; });
+  const totalRevenue = lines.reduce((s,l)=>s+l.amount,0);
+  const daily = computeDailyBreakdown(start, end);
+  const roomNightsSold = daily.reduce((s,d)=>s+d.occRooms,0);
+  const roomRevenueTotal = daily.reduce((s,d)=>s+d.roomRevenue,0);
+  const avgOcc = Math.round(daily.reduce((s,d)=>s+d.occPct,0)/daily.length);
+  const adr = roomNightsSold ? roomRevenueTotal/roomNightsSold : 0;
+  const revpar = (DB.rooms.length*lastDay) ? roomRevenueTotal/(DB.rooms.length*lastDay) : 0;
+  const bookingsInMonth = DB.bookings.filter(b=>b.checkIn>=start && b.checkIn<=end && b.status!=='cancelled' && b.status!=='no_show');
+  const avgLOS = bookingsInMonth.length ? (bookingsInMonth.reduce((s,b)=>s+nights(b.checkIn,b.checkOut),0)/bookingsInMonth.length) : 0;
+
+  // Sheet 1: Overview
+  const overviewRows = [
+    [DB.settings.hotelName + ' — Monthly Management Report'],
+    ['Period: '+monthLabel],
+    ['Generated: '+fmtDate(todayStr())],
+    [],
+    ['KEY METRICS',''],
+    ['Total Revenue (IDR)', totalRevenue],
+    ['Room Revenue (IDR)', roomRevenueTotal],
+    ['Average Occupancy (%)', avgOcc],
+    ['ADR — Average Daily Rate (IDR)', Math.round(adr)],
+    ['RevPAR — Revenue Per Available Room (IDR)', Math.round(revpar)],
+    ['Room-Nights Sold', roomNightsSold],
+    ['Total Bookings (by check-in date)', bookingsInMonth.length],
+    ['Average Length of Stay (nights)', Math.round(avgLOS*10)/10],
+    [],
+    ['REVENUE BY CATEGORY','Amount (IDR)']
+  ];
+  Object.keys(catTotals).sort().forEach(cat=>overviewRows.push([cat, catTotals[cat]]));
+  overviewRows.push([]);
+  overviewRows.push(['Note: revenue transactions only. A full balance sheet also needs cash/bank balances, receivables, fixed assets, and liabilities from your accounting records.']);
+
+  // Sheet 2: Daily Breakdown
+  const dailyRows = [['Date','Occupied Rooms','Occupancy %','Room Revenue','Other Revenue','Total Revenue']];
+  daily.forEach(d=> dailyRows.push([fmtDate(d.date), d.occRooms, d.occPct, d.roomRevenue, d.otherRevenue, d.total]));
+
+  // Sheet 3: Payment Method Reconciliation
+  const payTotals = computePaymentMethodTotals(start, end);
+  const payRows = [['Payment Method','Amount (IDR)']];
+  Object.keys(payTotals).forEach(k=> payRows.push([k, payTotals[k]]));
+  payRows.push(['Total (checked-out bookings this month)', Object.values(payTotals).reduce((a,b)=>a+b,0)]);
+  payRows.push([]);
+  payRows.push(['Note: based on bookings checked out within this month, using the payment method recorded at checkout or import.']);
+
+  // Sheet 4: Full Transaction Detail
+  const txRows = [['Date','Room','Guest','Category','Description','Amount (IDR)']];
+  lines.forEach(l=> txRows.push([l.date, l.room, l.guest, l.category, l.description, l.amount]));
+
+  // Sheet 5: Booking Log (OMSET-style)
+  const omsetRows = [['NO','TGL','Nama Tamu','Jumlah Tamu','Room','TGL Check In','TGL Check Out','Jam Check in','Postpaid','BCA','QRIS','TRANSFER','ID Booking','No. Telp']];
+  computeOmsetStyleRows(start, end).forEach(r=>{
+    omsetRows.push([r.no, r.tgl, r.name, r.pax, r.room, r.checkIn, r.checkOut, r.checkInTime, r.postpaid||'', r.bca||'', r.qris||'', r.transfer||'', r.bookingId, r.phone]);
+  });
+
+  // Sheet 6: Guest Origin
+  const originRows = [['Origin / Nationality','Bookings','Revenue (IDR)']];
+  computeGuestOriginBreakdown(start, end).forEach(o=> originRows.push([o.origin, o.count, o.revenue]));
+
+  // Sheet 7: Room Performance
+  const roomRows = [['Room','Type','Bed Type','Nights Sold','Revenue (IDR)']];
+  computeRoomPerformance(start, end).forEach(r=> roomRows.push([r.room, r.type, r.bedType, r.nights, r.revenue]));
+
+  // Sheet 8: Outstanding Balances
+  const outstanding = computeOutstandingBalances(start, end);
+  const outRows = [['Guest','Phone','Room','Check-in','Check-out','Status','Balance Due (IDR)']];
+  outstanding.forEach(o=> outRows.push([o.guest, o.phone, o.room, fmtDate(o.checkIn), fmtDate(o.checkOut), o.status.replace('_',' '), o.balance]));
+  if(!outstanding.length) outRows.push(['No outstanding balances for bookings checked out this month.','','','','','','']);
+
+  const wb = XLSX.utils.book_new();
+  const mk = (rows, cols, styleCfg) => { const ws = XLSX.utils.aoa_to_sheet(rows); if(cols) ws['!cols']=cols; if(styleCfg) styleWorksheet(ws, styleCfg); return ws; };
+  XLSX.utils.book_append_sheet(wb, mk(overviewRows,[{wch:34},{wch:18}], { titleRows:[0,1,2], headerRows:[4,14], plainNumCols:[1] }), 'Overview');
+  XLSX.utils.book_append_sheet(wb, mk(dailyRows,[{wch:14},{wch:14},{wch:12},{wch:16},{wch:16},{wch:16}], { headerRows:[0], moneyCols:[3,4,5], plainNumCols:[1,2] }), 'Daily Breakdown');
+  XLSX.utils.book_append_sheet(wb, mk(payRows,[{wch:28},{wch:16}], { headerRows:[0], moneyCols:[1] }), 'Payment Reconciliation');
+  XLSX.utils.book_append_sheet(wb, mk(txRows,[{wch:12},{wch:8},{wch:22},{wch:14},{wch:32},{wch:14}], { headerRows:[0], moneyCols:[5] }), 'Transactions');
+  XLSX.utils.book_append_sheet(wb, mk(omsetRows,[{wch:5},{wch:12},{wch:22},{wch:10},{wch:8},{wch:12},{wch:12},{wch:10},{wch:12},{wch:12},{wch:12},{wch:12},{wch:12},{wch:16}], { headerRows:[0], moneyCols:[8,9,10,11] }), 'Booking Log');
+  XLSX.utils.book_append_sheet(wb, mk(originRows,[{wch:20},{wch:12},{wch:16}], { headerRows:[0], moneyCols:[2], plainNumCols:[1] }), 'Guest Origin');
+  XLSX.utils.book_append_sheet(wb, mk(roomRows,[{wch:8},{wch:12},{wch:16},{wch:12},{wch:16}], { headerRows:[0], moneyCols:[4], plainNumCols:[3] }), 'Room Performance');
+  XLSX.utils.book_append_sheet(wb, mk(outRows,[{wch:22},{wch:16},{wch:8},{wch:12},{wch:12},{wch:14},{wch:16}], { headerRows:[0], moneyCols:[6] }), 'Outstanding Balances');
+  XLSX.writeFile(wb, `HashInnMarina-MonthlyReport-${monthStr}.xlsx`);
 }
 
 function exportData(){
