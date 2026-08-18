@@ -651,12 +651,14 @@ function startLivePolling(){
   if(liveListenerActive) return;
   liveChannel = supabaseClient.channel('pms_data_changes')
     .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'pms_data', filter: `id=eq.${PMS_ROW_ID}` }, (payload) => {
-      if(!UI.session || UI.modal) return;
-      const active = document.activeElement;
-      if(active && ['INPUT','TEXTAREA','SELECT'].includes(active.tagName)) return;
-      const val = payload.new && payload.new.data;
-      if(val && JSON.stringify(val) !== JSON.stringify(DB)){ DB = val; render(); }
-    }).subscribe();
+  const val = payload.new && payload.new.data;
+  if(!val || JSON.stringify(val) === JSON.stringify(DB)) return;
+  DB = val;
+  if(!UI.session || UI.modal) return;
+  const active = document.activeElement;
+  if(active && ['INPUT','TEXTAREA','SELECT'].includes(active.tagName)) return;
+  render();
+}).subscribe();
   liveListenerActive = true;
 }
 function stopLivePolling(){
