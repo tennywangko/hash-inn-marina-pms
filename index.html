@@ -1991,6 +1991,7 @@ function openMoveRoom(bid){
   const currentRoom = room(b.roomNumber);
   const eligible = DB.rooms.filter(r => r.number!==b.roomNumber && roomAvailableForRange(r.number, b.checkIn, b.checkOut, b.stayType, b.id));
   UI.modal = {
+    mrBookingId: bid,
     title: `Move Room — ${esc(g?g.name:'Guest')}`,
     body: `
       <div class="notice">Currently in Room ${b.roomNumber} (${currentRoom?currentRoom.type:''}${currentRoom&&currentRoom.bedType?', '+esc(currentRoom.bedType):''}). Stay: ${fmtDate(b.checkIn)} → ${fmtDate(b.checkOut)}.</div>
@@ -2000,7 +2001,16 @@ function openMoveRoom(bid){
             ${eligible.map(r=>`<option value="${r.number}" data-type="${r.type}">${r.number} — ${r.type}${r.bedType?' ('+esc(r.bedType)+')':''}</option>`).join('')}
           </select>
         </div>
-        <div class="field"><label>New Room Rate</label><input type="number" id="mrRate" value="${b.roomRate}"></div>
+        <div class="field"><label>Rate after the move</label>
+          <select id="mrRateMode" onchange="mrSyncRate()">
+            <option value="keep" selected>Keep current rate — ${money(b.roomRate)}/night${b.ratePlanName?' ('+esc(b.ratePlanName)+')':''}</option>
+            <option value="normal">Use the new room's normal rate</option>
+            ${(DB.ratePlans||[]).filter(r=>r.active && r.id!==b.ratePlanId).map(r=>`<option value="rp:${r.id}">Rate plan: ${esc(r.name)} (${money(r.price)}/night)</option>`).join('')}
+            <option value="custom">Custom rate</option>
+          </select>
+        </div>
+        <div class="field"><label>Room Rate / night after the move</label><input type="number" id="mrRate" value="${b.roomRate}" oninput="mrMarkCustom()"></div>
+        <div class="small muted" id="mrRateHint" style="margin:-4px 0 10px;"></div>
         <div class="field"><label>Reason / Notes (optional)</label><textarea id="mrReason" rows="2" placeholder="e.g. guest requested quieter room, AC issue"></textarea></div>
       ` : `<div class="warn">No other rooms are free for this stay's dates (${fmtDate(b.checkIn)} \u2192 ${fmtDate(b.checkOut)}). Check the Room Board for availability.</div>`}
     `,
@@ -2009,18 +2019,51 @@ function openMoveRoom(bid){
   render();
   if(eligible.length) setTimeout(mrSyncRate,0);
 }
+// Move Room rate handling: the guest's current rate (and rate plan) is KEPT by default.
+// A different rate is applied only when staff deliberately pick one, and they confirm before saving.
+function mrCurrentBooking(){
+  const m = UI.modal && UI.modal.mrBookingId;
+  return m ? bookingById(m) : null;
+}
 function mrSyncRate(){
   const sel = document.getElementById('mrRoom');
-  if(!sel) return;
+  const modeEl = document.getElementById('mrRateMode');
+  const rateEl = document.getElementById('mrRate');
+  const hint = document.getElementById('mrRateHint');
+  const b = mrCurrentBooking();
+  if(!sel || !modeEl || !rateEl || !b) return;
   const type = sel.options[sel.selectedIndex].dataset.type;
-  document.getElementById('mrRate').value = rateFor(type);
+  const curRoom = room(b.roomNumber);
+  const mode = modeEl.value;
+  if(mode==='keep') rateEl.value = b.roomRate;
+  else if(mode==='normal') rateEl.value = rateFor(type);
+  else if(mode.indexOf('rp:')===0){ const rp = ratePlanById(mode.slice(3)); if(rp) rateEl.value = rp.price; }
+  let msg = `Normal rate for a ${type} room: ${money(rateFor(type))}/night.`;
+  if(b.ratePlanName && curRoom && curRoom.type!==type) msg += ` This guest is on "${b.ratePlanName}" — moving to a ${type} room. Check whether a ${type} rate plan should apply.`;
+  if(hint) hint.textContent = msg;
+}
+function mrMarkCustom(){
+  const modeEl = document.getElementById('mrRateMode');
+  const b = mrCurrentBooking();
+  const rateEl = document.getElementById('mrRate');
+  if(!modeEl || !b || !rateEl) return;
+  const v = parseInt(rateEl.value)||0;
+  if(modeEl.value==='keep' && v===b.roomRate) return;
+  if(modeEl.value.indexOf('rp:')===0){ const rp = ratePlanById(modeEl.value.slice(3)); if(rp && rp.price===v) return; }
+  modeEl.value = 'custom';
 }
 function saveMoveRoom(bid){
   const b = bookingById(bid);
   const oldRoom = b.roomNumber;
   const oldRate = b.roomRate;
+  const oldPlanName = b.ratePlanName || '';
   const newRoom = document.getElementById('mrRoom').value;
-  const newRate = parseInt(document.getElementById('mrRate').value)||b.roomRate;
+  const modeEl = document.getElementById('mrRateMode');
+  const mode = modeEl ? modeEl.value : 'custom';
+  let newRate = parseInt(document.getElementById('mrRate').value)||b.roomRate;
+  let newPlan = null;           // rate plan to attach when staff picked one
+  if(mode==='keep') newRate = oldRate;
+  if(mode.indexOf('rp:')===0){ newPlan = ratePlanById(mode.slice(3)); if(newPlan) newRate = newPlan.price; }
   const reason = document.getElementById('mrReason').value.trim();
   const wasOccupied = b.status==='checked_in';
 
@@ -2029,8 +2072,17 @@ function saveMoveRoom(bid){
     return;
   }
 
+  if(newRate!==oldRate){
+    const already = wasOccupied ? Math.max(0, Math.min(nights(b.checkIn, b.checkOut), nights(b.checkIn, todayStr()))) : 0;
+    const planLine = newPlan ? `\nRate plan: ${oldPlanName||'none'} → ${newPlan.name}` : (oldPlanName ? `\nRate plan "${oldPlanName}" will be removed from this booking.` : '');
+    const ok = confirm(`The room rate will change from ${money(oldRate)} to ${money(newRate)} per night.${planLine}${already>0 ? `\nThe ${already} night(s) already stayed keep ${money(oldRate)}.` : ''}\n\nPress Cancel to go back and keep the current rate.`);
+    if(!ok) return;
+  }
+
   b.roomNumber = newRoom;
   b.roomRate = newRate;
+  if(newPlan){ b.ratePlanId = newPlan.id; b.ratePlanName = newPlan.name; }
+  else if(newRate!==oldRate){ b.ratePlanId = null; b.ratePlanName = ''; }
   const staffName = UI.session ? UI.session.name : 'Staff';
   const moveNote = `Moved from Room ${oldRoom} to Room ${newRoom} on ${fmtDate(todayStr())} by ${staffName}.${reason ? ' Reason: '+reason : ''}`;
   b.notes = b.notes ? b.notes + ' — ' + moveNote : moveNote;
@@ -2055,7 +2107,8 @@ function saveMoveRoom(bid){
     if(old){ old.hk = 'dirty'; }
   }
 
-  logAudit('room_moved', `Booking moved Room ${oldRoom} \u2192 Room ${newRoom}.${newRate!==oldRate?' Rate '+money(oldRate)+' \u2192 '+money(newRate)+'/night.':''}${reason?' Reason: '+reason:''}${adjustmentNote}`);
+  const planNote = (b.ratePlanName||'')!==oldPlanName ? ` Rate plan: ${oldPlanName||'none'} \u2192 ${b.ratePlanName||'none'}.` : '';
+  logAudit('room_moved', `Booking moved Room ${oldRoom} \u2192 Room ${newRoom}.${newRate!==oldRate?' Rate '+money(oldRate)+' \u2192 '+money(newRate)+'/night.':' Rate kept at '+money(oldRate)+'/night.'}${planNote}${reason?' Reason: '+reason:''}${adjustmentNote}`);
   persist(); UI.modal=null; render();
 }
 
