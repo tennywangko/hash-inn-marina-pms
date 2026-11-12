@@ -1449,7 +1449,58 @@ function renderNightAudit(){
       </div>
     `).join('')}
   </div>
+  ${renderPaymentsWithoutBank()}
   `;
+}
+
+function paymentsWithoutBank(){
+  const rows = [];
+  (DB.bookings||[]).forEach(b=>{
+    const g = guestById(b.guestId);
+    (b.payments||[]).forEach(p=>{
+      if(p.reversalOf || PAY_METHODS.includes(p.method)) return;
+      const reversed = (b.payments||[]).some(x=>x.reversalOf===p.id);
+      if(reversed) return;
+      rows.push({kind:'booking', bid:b.id, pid:p.id, date:p.date||'', room:b.roomNumber, guest:g?g.name:'—', method:p.method||'', amount:p.amount});
+    });
+  });
+  (DB.groups||[]).forEach(gr=>{
+    (gr.payments||[]).forEach(p=>{
+      if(PAY_METHODS.includes(p.method)) return;
+      rows.push({kind:'group', gid:gr.id, date:p.date||'', room:'Group', guest:gr.name, method:p.method||'', amount:p.amount});
+    });
+  });
+  rows.sort((a,b)=>b.date.localeCompare(a.date));
+  return rows;
+}
+function renderPaymentsWithoutBank(){
+  if(!UI.session || UI.session.role!=='manager') return '';
+  const from = UI.pwbFrom || startOfMonth();
+  const all = paymentsWithoutBank().filter(r=>r.date>=from);
+  const sum = all.reduce((s,r)=>s+r.amount,0);
+  const shown = all.slice(0,200);
+  return `
+  <div class="card" style="margin-top:16px;">
+    <div class="toolbar" style="margin-bottom:6px;">
+      <div>
+        <strong style="color:var(--navy);font-size:13.5px;">Payments with no bank recorded / Pembayaran tanpa bank</strong>
+        <div class="small muted" style="margin-top:2px;">Every payment must say which account the money went to. Fix each one below — the change is kept in the Audit Log. / Setiap pembayaran harus jelas masuk ke rekening mana.</div>
+      </div>
+      <div class="field" style="max-width:180px;margin:0;"><label>From / Dari</label><input type="date" value="${from}" onchange="UI.pwbFrom=this.value;render()"></div>
+    </div>
+    ${all.length ? `<div class="warn">${all.length} payment(s) · ${money(sum)} still have no bank.</div>` : `<div class="notice" style="color:var(--green);">All payments since ${fmtDate(from)} have a bank recorded ✓</div>`}
+    ${all.length ? `<table>
+      <thead><tr><th>Date</th><th>${tr('col_room')}</th><th>${tr('col_guest')}</th><th>Recorded as</th><th>Amount</th><th></th></tr></thead>
+      <tbody>
+      ${shown.map(r=>`<tr><td>${fmtDate(r.date)}</td><td>${esc(r.room)}</td><td>${esc(r.guest)}</td><td><span class="badge b-amber">${esc(r.method||'—')}</span></td><td>${money(r.amount)}</td>
+        <td>${r.kind==='booking' ? `<button class="btn small" onclick="UI.pmReturn='nightaudit';openChangePayMethod('${r.bid}','${r.pid}')">Choose bank</button>` : `<span class="small muted">Fix in Groups</span>`}</td></tr>`).join('')}
+      </tbody>
+    </table>${all.length>shown.length?`<div class="small muted" style="margin-top:6px;">Showing the newest 200.</div>`:''}` : ''}
+  </div>`;
+}
+function afterPayMethodDialog(bid){
+  if(UI.pmReturn==='nightaudit'){ UI.pmReturn=null; UI.modal=null; render(); }
+  else openBillingFolio(bid);
 }
 
 function renderAuditLog(){
@@ -1898,7 +1949,7 @@ function openEditBooking(bid){
             ${['Walk-in','Phone / WhatsApp','Traveloka','Tiket.com','Ship Agent','Other'].map(s=>`<option ${b.bookingSource===s?'selected':''}>${s}</option>`).join('')}
           </select>
         </div>
-        <div class="field"><label>Deposit</label><input type="number" id="ebDeposit" value="${b.deposit||0}"></div>
+        <div class="field"><label>Deposit</label><div class="small muted" style="padding-top:6px;">${money(b.deposit||0)} — record or correct deposits as payments in the folio (with bank). / Catat deposit sebagai pembayaran di folio (dengan bank).</div></div>
       </div>
       <div class="field"><label>Notes</label><textarea id="ebNotes" rows="2">${esc(b.notes||'')}</textarea></div>
     `,
@@ -1957,7 +2008,6 @@ function saveEditBooking(bid){
   b.packageName = pkg ? pkg.name : '';
   b.packagePrice = pkg ? pkg.price : 0;
   b.bookingSource = document.getElementById('ebSource').value;
-  b.deposit = parseInt(document.getElementById('ebDeposit').value)||0;
   b.notes = document.getElementById('ebNotes').value.trim();
   b.editedBy = UI.session.name;
   b.editedAt = todayStr();
@@ -2360,6 +2410,10 @@ function openNewBooking(){
         </div>
         <div class="field"><label>Deposit (optional)</label><input type="number" id="nbDeposit" placeholder="0"></div>
       </div>
+      <div class="field"><label>Deposit paid via / Deposit dibayar lewat</label>
+        <select id="nbDepositMethod">${payMethodOptionsHTML('')}</select>
+        <div class="small muted" style="margin-top:4px;">Required if a deposit is entered. It is saved as a payment in the folio — do not add it again. / Wajib diisi kalau ada deposit. Otomatis tercatat sebagai pembayaran di folio — jangan dicatat dua kali.</div>
+      </div>
       <div class="field">
         <label>Accompanying Guests <span class="small muted">(for 2+ people in the room)</span></label>
         <div id="nbAccompanyList"></div>
@@ -2527,6 +2581,9 @@ function saveNewBooking(){
   const pkg = pkgId ? packageById(pkgId) : null;
   const rpId = document.getElementById('nbRatePlan').value;
   const ratePlan = rpId ? ratePlanById(rpId) : null;
+  const depositAmt = Math.max(parseInt(document.getElementById('nbDeposit').value)||0, 0);
+  const depositMethod = document.getElementById('nbDepositMethod') ? document.getElementById('nbDepositMethod').value : '';
+  if(depositAmt>0 && !depositMethod){ alert(tr('pm_required')); return; }
   const b = {
     id:uid('bk'), roomNumber:roomNum, guestId, pax,
     checkIn:ci, checkOut:co, status:'reserved', stayType,
@@ -2538,14 +2595,17 @@ function saveNewBooking(){
     packagePrice: pkg ? pkg.price : 0,
     breakfast: !!pkg,
     bookingSource: document.getElementById('nbSource').value,
-    deposit: parseInt(document.getElementById('nbDeposit').value)||0,
-    charges:[], paid:false,
+    deposit: depositAmt,
+    charges:[], payments:[], paid:false,
     accompanyingGuests: collectAccompanyRows('nbAccompanyList'),
     notes: document.getElementById('nbNotes').value.trim()
   };
+  if(depositAmt>0){
+    b.payments.push({id:uid('pay'), amount:depositAmt, method:depositMethod, date:todayStr(), notes:'Deposit at booking', isDeposit:true, postedBy: UI.session ? UI.session.name : 'Unknown'});
+  }
   DB.bookings.push(b);
   const bGuest = guestById(guestId);
-  logAudit('booking_created', `Room ${roomNum}: ${fmtDate(ci)}\u2192${fmtDate(co)}, ${esc(bGuest?bGuest.name:'guest')}, ${money(b.roomRate)}/night.`);
+  logAudit('booking_created', `Room ${roomNum}: ${fmtDate(ci)}\u2192${fmtDate(co)}, ${esc(bGuest?bGuest.name:'guest')}, ${money(b.roomRate)}/night.${depositAmt>0?' Deposit '+money(depositAmt)+' via '+depositMethod+'.':''}`);
   persist(); UI.modal=null; render();
 }
 
@@ -3310,6 +3370,7 @@ function renderBilling(){
   `;
 }
 function openBillingFolio(bid){
+  UI.pmReturn = null;
   const b = bookingById(bid); const g = guestById(b.guestId);
   const total = folioTotal(b);
   const isManager = UI.session && UI.session.role==='manager';
@@ -3454,10 +3515,10 @@ function openBillingFolio(bid){
       ${isManager ? `
       <div class="field" style="margin-top:18px;border-top:1px solid var(--border);padding-top:14px;">
         <label>Manager Override</label>
-        <div class="small muted" style="margin-bottom:8px;">Directly correct the room rate, package price, or deposit on this booking. Changes apply immediately to the folio and any future printed invoice.</div>
+        <div class="small muted" style="margin-bottom:8px;">Directly correct the room rate or package price on this booking. Changes apply immediately to the folio and any future printed invoice.</div>
         <div class="row2">
           <div><label class="small">Room Rate / night</label><input type="number" id="foRoomRate" value="${b.roomRate}"></div>
-          <div><label class="small">Deposit</label><input type="number" id="foDeposit" value="${b.deposit||0}"></div>
+          <div><label class="small">Deposit</label><div class="small muted" style="padding-top:6px;">${money(b.deposit||0)} — add deposits with "Record Payment" so the bank is recorded.</div></div>
         </div>
         ${b.packageId ? `<div style="margin-top:8px;"><label class="small">Package Price (${esc(b.packageName)})</label><input type="number" id="foPackagePrice" value="${b.packagePrice}"></div>` : ''}
         ${(b.status==='checked_in' && nights(b.checkIn, todayStr())>0) ? `
@@ -3496,10 +3557,9 @@ function saveFolioOverride(bid){
       logAudit('rate_adjustment_applied', `Room ${b.roomNumber}: rate changed ${money(oldRate)}\u2192${money(newRate)}/night from today; ${nightsAlready} night(s) already stayed adjusted by ${money(adjustment)}.`);
     }
   }
-  b.deposit = parseInt(document.getElementById('foDeposit').value)||0;
   const pkgEl = document.getElementById('foPackagePrice');
   if(pkgEl) b.packagePrice = parseInt(pkgEl.value)||b.packagePrice;
-  logAudit('folio_override', `Room ${b.roomNumber}: rate ${money(oldRate)}\u2192${money(b.roomRate)}, deposit ${money(oldDeposit||0)}\u2192${money(b.deposit)}${pkgEl?`, package ${money(oldPkg)}\u2192${money(b.packagePrice)}`:''}`);
+  logAudit('folio_override', `Room ${b.roomNumber}: rate ${money(oldRate)}\u2192${money(b.roomRate)}${pkgEl?`, package ${money(oldPkg)}\u2192${money(b.packagePrice)}`:''}`);
   persist();
   openBillingFolio(bid);
 }
@@ -3747,7 +3807,7 @@ function openChangePayMethod(bid, pid){
       <div class="field"><label>${tr('pm_change_title')}</label><select id="cpmMethod">${payMethodOptionsHTML(PAY_METHODS.includes(p.method)?p.method:'')}</select></div>
       <div class="field"><label>${tr('pm_change_reason')}</label><textarea id="cpmReason" rows="2" placeholder="e.g. tamu bayar via QRIS BTPN, bukan BCA"></textarea></div>
     `,
-    actions:`<button class="btn ghost" onclick="openBillingFolio('${bid}')">Cancel</button><button class="btn" onclick="saveChangePayMethod('${bid}','${pid}')">Save</button>`
+    actions:`<button class="btn ghost" onclick="afterPayMethodDialog('${bid}')">Cancel</button><button class="btn" onclick="saveChangePayMethod('${bid}','${pid}')">Save</button>`
   };
   render();
 }
@@ -3760,7 +3820,7 @@ function saveChangePayMethod(bid, pid){
   const reason = document.getElementById('cpmReason').value.trim();
   if(!method){ alert(tr('pm_required')); return; }
   if(!reason){ alert('Please enter a reason / Isi alasan.'); return; }
-  if(method===p.method){ openBillingFolio(bid); return; }
+  if(method===p.method){ afterPayMethodDialog(bid); return; }
   const from = p.method;
   p.methodHistory = p.methodHistory || [];
   p.methodHistory.push({from, to:method, reason, by:UI.session.name, at:new Date().toISOString()});
@@ -3770,7 +3830,7 @@ function saveChangePayMethod(bid, pid){
   if(b.paymentMethod===from) b.paymentMethod = method;
   logAudit('payment_method_changed', `Room ${b.roomNumber}: payment ${money(p.amount)} on ${fmtDate(p.date)} changed from ${from} to ${method}. Reason: ${reason}`);
   persist();
-  openBillingFolio(bid);
+  afterPayMethodDialog(bid);
 }
 function saveReversePayment(bid, pid){
   const b = bookingById(bid);
