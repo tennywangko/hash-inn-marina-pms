@@ -214,16 +214,15 @@ const PMS_ROW_ID = 1;
 let DB = null;
 let UI = { role:'manager', tab:'dashboard', modal:null, calOffset:0, hkFilter:'dirty', billSearch:'', guestSearch:'', lang:'en', session:null, loginError:'', saveError:false };
 
-async function ensureAuth(){
+async function requireSession(){
   const { data: { session } } = await supabaseClient.auth.getSession();
-  if(!session){
-    const { error } = await supabaseClient.auth.signInAnonymously();
-    if(error) console.error('anonymous sign-in failed', error);
-  }
+  if(!session) throw new Error('not signed in');
+  return session;
 }
 async function persist(){
   try{
-    await ensureAuth();
+    if(!DB) throw new Error('no data loaded');
+    await requireSession();
     const { error } = await supabaseClient.from('pms_data').upsert({ id: PMS_ROW_ID, data: DB, updated_at: new Date().toISOString() });
     if(error) throw error;
     UI.saveError = false;
@@ -245,7 +244,7 @@ function nowTimeStr(){ const d=new Date(); return pad(d.getHours())+':'+pad(d.ge
 async function refreshFromServerOnWake(){
   if(document.visibilityState !== 'visible' || !UI.session || !SUPABASE_CONFIGURED) return;
   try{
-    await ensureAuth();
+    await requireSession();
     const { data, error } = await supabaseClient.from('pms_data').select('data').eq('id', PMS_ROW_ID).maybeSingle();
     if(error || !data || !data.data) return;
     const val = data.data;
@@ -441,24 +440,16 @@ function tr(key){ return (TRANSLATIONS[UI.lang] && TRANSLATIONS[UI.lang][key]) |
 function setLang(l){ UI.lang = l; render(); }
 
 
-async function loadOrSeed(){
-  try{
-    await ensureAuth();
-    const { data, error } = await supabaseClient.from('pms_data').select('data').eq('id', PMS_ROW_ID).maybeSingle();
-    if(error) throw error;
-    if(data && data.data){
-      DB = data.data;
-      DB.guests = DB.guests || []; DB.bookings = DB.bookings || []; DB.rooms = DB.rooms || [];
-      DB.packages = DB.packages || []; DB.staff = DB.staff || []; DB.settings = DB.settings || {}; DB.lostFound = DB.lostFound || [];
-      await migrateRoomPlanIfNeeded(); await migratePackagesIfNeeded(); await migrateStaffIfNeeded(); await migrateLostFoundIfNeeded(); await migratePaymentsIfNeeded(); await migrateNightAuditsIfNeeded(); await migrateCleaningLogIfNeeded(); await migrateRatePlansIfNeeded(); return;
-    }
-    DB = seed();
-    await persist();
-  }catch(e){
-    console.error('initial load failed', e);
-    DB = seed();
-    await persist();
-  }
+/* Never reseed here: a failed or empty read must not overwrite the live data. */
+async function loadData(){
+  await requireSession();
+  const { data, error } = await supabaseClient.from('pms_data').select('data').eq('id', PMS_ROW_ID).maybeSingle();
+  if(error) throw error;
+  if(!data || !data.data) throw new Error('PMS data not found');
+  DB = data.data;
+  DB.guests = DB.guests || []; DB.bookings = DB.bookings || []; DB.rooms = DB.rooms || [];
+  DB.packages = DB.packages || []; DB.staff = DB.staff || []; DB.settings = DB.settings || {}; DB.lostFound = DB.lostFound || [];
+      await migrateRoomPlanIfNeeded(); await migratePackagesIfNeeded(); await migrateStaffIfNeeded(); await migrateLostFoundIfNeeded(); await migratePaymentsIfNeeded(); await migrateNightAuditsIfNeeded(); await migrateCleaningLogIfNeeded(); await migrateRatePlansIfNeeded();
 }
 
 async function migrateRoomPlanIfNeeded(){
@@ -918,7 +909,73 @@ async function render(){
   }
 }
 
+/* Staff who have logged in on this device, so they can pick their name next time.
+   Only name and login email are kept here, never passwords. */
+const KNOWN_USERS_KEY = 'pms_known_users';
+function getKnownUsers(){
+  try{ const list = JSON.parse(localStorage.getItem(KNOWN_USERS_KEY) || '[]'); return Array.isArray(list) ? list : []; }
+  catch(e){ return []; }
+}
+function setKnownUsers(list){
+  try{ localStorage.setItem(KNOWN_USERS_KEY, JSON.stringify(list)); }catch(e){}
+}
+function rememberKnownUser(name, email){
+  if(!email) return;
+  const list = getKnownUsers().filter(u => u.email.toLowerCase() !== email.toLowerCase());
+  list.push({ name, email });
+  list.sort((a,b) => a.name.localeCompare(b.name));
+  setKnownUsers(list);
+}
+function forgetKnownUser(i){
+  const list = getKnownUsers();
+  const u = list[i];
+  if(!u || !confirm(`Remove ${u.name} from this device? They can log in with email again at any time.`)) return;
+  list.splice(i, 1);
+  setKnownUsers(list);
+  UI.loginPick = null;
+  render();
+}
+function pickLoginUser(i){ UI.loginPick = getKnownUsers()[i] || null; UI.loginError = ''; render(); }
+function setLoginMode(mode){ UI.loginMode = mode; UI.loginPick = null; UI.loginError = ''; render(); }
+
 function renderLoginScreen(){
+  const known = getKnownUsers();
+  const showNames = known.length && UI.loginMode !== 'email';
+  const passwordField = `
+      <div class="field"><label>Password</label>
+        <input type="password" id="loginPassword" autocomplete="current-password" style="width:100%;" onkeydown="if(event.key==='Enter')doLogin()">
+      </div>`;
+  const linkStyle = 'display:block;width:100%;background:none;border:none;color:var(--navy);text-decoration:underline;font-size:12.5px;margin-top:12px;cursor:pointer;';
+  let form;
+  if(showNames && UI.loginPick){
+    form = `
+      <div style="font-size:13px;margin-bottom:10px;">Logging in as <strong>${esc(UI.loginPick.name)}</strong></div>
+      ${passwordField}
+      ${UI.loginError ? `<div class="warn">${esc(UI.loginError)}</div>` : ''}
+      <button class="btn" style="width:100%;justify-content:center;margin-top:6px;" onclick="doLogin()">Log In</button>
+      <button style="${linkStyle}" onclick="pickLoginUser(-1)">Not you? Choose another name</button>`;
+  } else if(showNames){
+    form = `
+      <div style="font-size:13px;margin-bottom:10px;">Who is logging in?</div>
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        ${known.map((u,i) => `
+          <div style="display:flex;gap:6px;">
+            <button class="btn ghost" style="flex:1;justify-content:flex-start;" onclick="pickLoginUser(${i})">${esc(u.name)}</button>
+            <button class="btn ghost small" title="Remove from this device" aria-label="Remove ${esc(u.name)} from this device" onclick="forgetKnownUser(${i})">✕</button>
+          </div>`).join('')}
+      </div>
+      ${UI.loginError ? `<div class="warn" style="margin-top:12px;">${esc(UI.loginError)}</div>` : ''}
+      <button style="${linkStyle}" onclick="setLoginMode('email')">First time on this device? Log in with email</button>`;
+  } else {
+    form = `
+      <div class="field"><label>Email</label>
+        <input type="email" id="loginEmail" autocomplete="username" style="width:100%;">
+      </div>
+      ${passwordField}
+      ${UI.loginError ? `<div class="warn">${esc(UI.loginError)}</div>` : ''}
+      <button class="btn" style="width:100%;justify-content:center;margin-top:6px;" onclick="doLogin()">Log In</button>
+      ${known.length ? `<button style="${linkStyle}" onclick="setLoginMode('names')">Back to names</button>` : ''}`;
+  }
   return `
   <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,var(--navy),var(--navy-3));padding:20px;">
     <div style="background:#fff;border-radius:14px;padding:32px 28px;max-width:380px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,0.3);">
@@ -927,41 +984,103 @@ function renderLoginScreen(){
         <h2 style="margin:0;color:var(--navy);font-size:19px;">Hash Inn Marina</h2>
         <div style="color:var(--text-muted);font-size:12px;margin-top:2px;">Property Management System — Staff Login</div>
       </div>
-      <div class="field"><label>Your Name</label>
-        <select id="loginStaff" style="width:100%;">
-          ${(DB.staff||[]).map(s=>`<option value="${s.id}">${esc(s.name)}</option>`).join('')}
-        </select>
-      </div>
-      <div class="field"><label>PIN</label>
-        <input type="password" id="loginPin" inputmode="numeric" maxlength="8" placeholder="••••" style="width:100%;font-size:22px;letter-spacing:8px;text-align:center;">
-      </div>
-      ${UI.loginError ? `<div class="warn">${esc(UI.loginError)}</div>` : ''}
-      <button class="btn" style="width:100%;justify-content:center;margin-top:6px;" onclick="doLogin()">Log In</button>
+      ${form}
+      ${UI.loadError ? `<button class="btn ghost" style="width:100%;justify-content:center;margin-top:8px;" onclick="retryLoad()">Retry</button>` : ''}
     </div>
   </div>
   `;
 }
-function doLogin(){
-  const staffId = document.getElementById('loginStaff').value;
-  const pin = document.getElementById('loginPin').value;
-  const staffMember = (DB.staff||[]).find(s=>s.id===staffId);
-  if(!staffMember || staffMember.pin !== pin){
-    UI.loginError = 'Incorrect PIN. Please try again.';
+async function startSession(){
+  const { data: { session } } = await supabaseClient.auth.getSession();
+  if(!session) return;
+  if(session.user.is_anonymous){ await supabaseClient.auth.signOut({ scope:'local' }); return; }
+  const { data: access, error } = await supabaseClient.from('pms_staff_access').select('staff_id,name,role').eq('user_id', session.user.id).eq('active', true).maybeSingle();
+  if(error) throw error;
+  if(!access || !TABS_BY_ROLE[access.role]){
+    await supabaseClient.auth.signOut({ scope:'local' });
+    UI.loginError = 'This account does not have PMS access. Please contact the manager.';
+    return;
+  }
+  await loadData();
+  rememberKnownUser(access.name, session.user.email);
+  UI.loginMode = null;
+  UI.loginPick = null;
+  UI.session = { staffId: access.staff_id, name: access.name, role: access.role };
+  UI.role = access.role;
+  UI.tab = TABS_BY_ROLE[access.role][0];
+  startLivePolling();
+}
+async function tryStartSession(){
+  UI.loginError = '';
+  UI.loadError = false;
+  try{
+    await startSession();
+  }catch(e){
+    console.error('initial load failed', e);
+    DB = null;
+    UI.session = null;
+    UI.loadError = true;
+    UI.loginError = 'Could not load PMS data. Nothing was changed. Check your internet connection and retry.';
+  }
+}
+async function retryLoad(){
+  await tryStartSession();
+  render();
+}
+async function doLogin(){
+  const emailInput = document.getElementById('loginEmail');
+  const email = emailInput ? emailInput.value.trim() : (UI.loginPick ? UI.loginPick.email : '');
+  const password = document.getElementById('loginPassword').value;
+  const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
+  if(error){
+    UI.loginError = emailInput ? 'Could not log in. Check your email, password and internet connection.' : 'Could not log in. Check your password and internet connection.';
     render();
     return;
   }
-  UI.session = { staffId: staffMember.id, name: staffMember.name, role: staffMember.role };
-  UI.role = staffMember.role;
-  UI.loginError = '';
-  UI.tab = TABS_BY_ROLE[staffMember.role][0];
+  await tryStartSession();
   render();
-  startLivePolling();
 }
-function doLogout(){
+async function doLogout(){
+  stopLivePolling();
+  await supabaseClient.auth.signOut({ scope:'local' });
   UI.session = null;
   UI.modal = null;
-  stopLivePolling();
+  DB = null;
   render();
+}
+function openChangePassword(){
+  UI.modal = {
+    title: 'Change Password',
+    body:`
+      <div class="field"><label>Current password</label><input type="password" id="cpwCurrent" autocomplete="current-password" style="width:100%;"></div>
+      <div class="field"><label>New password (at least 12 characters)</label><input type="password" id="cpwNew" autocomplete="new-password" style="width:100%;"></div>
+      <div class="field"><label>Repeat new password</label><input type="password" id="cpwRepeat" autocomplete="new-password" style="width:100%;"></div>
+      <div class="warn" id="cpwMsg" style="display:none;"></div>
+    `,
+    actions:`<button class="btn ghost" onclick="closeModal()">Cancel</button><button class="btn" id="cpwSave" onclick="doChangePassword()">Save Password</button>`
+  };
+  render();
+}
+async function doChangePassword(){
+  const current = document.getElementById('cpwCurrent').value;
+  const next = document.getElementById('cpwNew').value;
+  const repeat = document.getElementById('cpwRepeat').value;
+  const msg = document.getElementById('cpwMsg');
+  const saveBtn = document.getElementById('cpwSave');
+  const fail = (text) => { msg.textContent = text; msg.style.display = ''; saveBtn.disabled = false; };
+  if(next.length < 12) return fail('The new password must be at least 12 characters.');
+  if(next !== repeat) return fail('The two new passwords do not match.');
+  if(next === current) return fail('The new password must be different from the current one.');
+  saveBtn.disabled = true;
+  // Re-check the current password so nobody can change it from an unattended screen.
+  const { data: { session } } = await supabaseClient.auth.getSession();
+  if(!session){ closeModal(); return; }
+  const { error: checkError } = await supabaseClient.auth.signInWithPassword({ email: session.user.email, password: current });
+  if(checkError) return fail('The current password is not correct.');
+  const { error } = await supabaseClient.auth.updateUser({ password: next });
+  if(error) return fail('Could not change the password: ' + error.message);
+  closeModal();
+  alert('Password changed. Use the new password next time you log in.');
 }
 
 let liveListenerActive = false;
@@ -1013,6 +1132,7 @@ function renderHeader(){
             ${Object.keys(roleLabels).map(v=>`<option value="${v}" ${UI.role===v?'selected':''}>${roleLabels[v]}</option>`).join('')}
           </select>
         ` : ''}
+        <button class="btn small ghost" style="color:#fff;border-color:rgba(255,255,255,0.35);" onclick="openChangePassword()">Change Password</button>
         <button class="btn small ghost" style="color:#fff;border-color:rgba(255,255,255,0.35);" onclick="doLogout()">Log Out</button>
       </div>
     </div>
@@ -4304,7 +4424,7 @@ function renderSettings(){
     <div class="toolbar" style="margin-bottom:0;">
       <div>
         <strong style="color:var(--navy);font-size:13.5px;">Staff Accounts</strong>
-        <div class="small muted" style="margin-top:2px;">Each staff member logs in with their own name and PIN, and lands directly on the screens for their role.</div>
+        <div class="small muted" style="margin-top:2px;">Each staff member logs in with their own email and password, and lands directly on the screens for their role. Logins are managed in Supabase, not on this screen.</div>
       </div>
       <button class="btn small" onclick="openAddStaff()">+ Add Staff</button>
     </div>
@@ -4317,7 +4437,7 @@ function renderSettings(){
       </tr>`).join('')}
       </tbody>
     </table>
-    <div class="small muted" style="margin-top:10px;">PINs are shared, unencrypted access codes — not secure account passwords. Treat them like a front-desk lock code, not a bank PIN.</div>
+    <div class="small muted" style="margin-top:10px;">PINs are no longer used to log in.</div>
   </div>
 
   <div class="card" style="margin-top:14px;">
@@ -5616,7 +5736,7 @@ function setRole(r){ UI.role=r; UI.modal=null; render(); }
 /* ============================= INIT ============================= */
 async function init(){
   document.getElementById('app').innerHTML = '<div style="padding:40px;text-align:center;color:#66768A;">Loading Hash Inn Marina PMS…</div>';
-  await loadOrSeed();
+  await tryStartSession();
   render();
   setInterval(()=>{
     if(UI.session && UI.tab==='housekeeping' && !UI.modal){
