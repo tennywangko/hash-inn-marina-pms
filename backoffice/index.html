@@ -192,7 +192,34 @@ const DEPTS = ['hotel','resto','bar','bakery','umum'];
 function toast(m, err){ const d=document.createElement('div'); d.className='toast'+(err?' err':''); d.textContent=m; document.body.appendChild(d); setTimeout(()=>d.remove(), err?5000:2000); }
 function fail(e){ console.error(e); const m=(e&&e.message)||''; if(/SESSION_EXPIRED/.test(m)){ toast(t('expired'), true); doLogout(true); return; } toast(m && !/fetch|network/i.test(m) ? m : t('conn'), true); }
 
-async function ensureAuth(){ const { data:{ session } } = await sb.auth.getSession(); if(!session){ const { error } = await sb.auth.signInAnonymously(); if(error) throw error; } }
+/* The database only accepts real staff accounts (the same accounts used for the PMS).
+   A device signs in once with one of them; people then log in to the back office with their name + PIN. */
+async function ensureAuth(){
+  const { data:{ session } } = await sb.auth.getSession();
+  if(session && session.user && session.user.is_anonymous){ await sb.auth.signOut({ scope:'local' }); return false; }
+  return !!session;
+}
+function renderDeviceLogin(err, typed){
+  const last = typed || ls('devEmail','') || '';
+  document.getElementById('app').innerHTML = `<div class="login card">
+    <h2 style="margin:0 0 4px">Hash Inn Marina — Back Office</h2>
+    <div class="muted small" style="margin-bottom:12px">Masuk dengan akun staf (email & password yang sama dengan PMS). Cukup sekali di setiap perangkat.<br>Sign in with a staff account (same email & password as the PMS). Once per device.</div>
+    ${err?`<div class="banner" style="margin-bottom:10px">${esc(err)}</div>`:''}
+    <label class="f" for="dEmail">Email</label><input id="dEmail" type="email" autocomplete="username" value="${esc(last)}">
+    <label class="f" for="dPass" style="margin-top:8px">Password</label><input id="dPass" type="password" autocomplete="current-password">
+    <button class="btn primary" style="width:100%;margin-top:14px" id="dGo" onclick="deviceLogin()">Masuk / Sign in</button></div>`;
+  const p=document.getElementById('dPass'); p.onkeydown=e=>{ if(e.key==='Enter') deviceLogin(); };
+  setTimeout(()=>document.getElementById(last?'dPass':'dEmail').focus(),30);
+}
+async function deviceLogin(){
+  const email=document.getElementById('dEmail').value.trim(), password=document.getElementById('dPass').value;
+  if(!email||!password) return;
+  document.getElementById('dGo').disabled=true;
+  const { error } = await sb.auth.signInWithPassword({ email, password });
+  if(error){ renderDeviceLogin(/fetch|network/i.test(error.message||'') ? T.conn[0]+' / '+T.conn[1] : 'Email atau password salah. / Wrong email or password.', email); return; }
+  lsSet('devEmail', email); boot();
+}
+async function deviceLogout(){ await doLogout(); await sb.auth.signOut({ scope:'local' }); renderDeviceLogin(); }
 async function call(fn, args){ const { data, error } = await sb.rpc(fn, args||{}); if(error) throw error; return data; }
 const api = (fn, args) => call(fn, Object.assign({ p_token:S.token }, args||{}));
 
@@ -217,7 +244,7 @@ function closeModal(v){ const m=S.modal; S.modal=null; renderModal(); if(m) m.re
 async function boot(){
   document.getElementById('app').innerHTML='<div class="login card muted">Loading…</div>';
   try{
-    await ensureAuth();
+    if(!(await ensureAuth())){ renderDeviceLogin(); return; }
     if(S.token){ try{ S.boot = await api('bo_bootstrap'); S.user=S.boot.user; }catch(e){ S.token=null; sessionStorage.removeItem('bo_token'); } }
     if(!S.user) S.names = await call('bo_user_list');
     render(); if(S.user) go('home');
@@ -245,7 +272,7 @@ function render(){
     <label class="f" for="lPin">${t('pin')}</label><input id="lPin" type="password" inputmode="numeric" autocomplete="off" onkeydown="if(event.key==='Enter')login()">
     ${S.loginError?`<div class="pill red" style="margin-top:10px">${esc(S.loginError)}</div>`:''}
     <button class="btn primary" style="width:100%;margin-top:14px" onclick="login()">${t('login')}</button>
-    <div class="row" style="justify-content:center;margin-top:10px"><button class="btn sm" onclick="toggleLang()">${t('language')}</button></div></div>`; return; }
+    <div class="row" style="justify-content:center;margin-top:10px"><button class="btn sm" onclick="toggleLang()">${t('language')}</button><button class="btn sm" onclick="deviceLogout()">${S.lang==='id'?'Ganti akun perangkat':'Switch device account'}</button></div></div>`; return; }
   const tabs=['home','entry','list','ledger','cash','report','payroll','stock','gl'].concat(S.user.role==='owner'?['settings']:[]);
   app.innerHTML=`<header><div class="brand"><div class="brand-mark">BO</div><div><h1>Back Office</h1><span>Hash Inn Marina</span></div></div>
     <div class="hdr-right"><span class="hide-m">${esc(S.user.name)} · ${S.user.role}</span><button onclick="toggleLang()">${t('language')}</button><button onclick="doLogout()">${t('logout')}</button></div></header>

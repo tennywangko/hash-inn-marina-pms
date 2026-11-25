@@ -1,6 +1,6 @@
 // Service worker for pos. Keeps the app shell available and fast;
 // live data (Supabase) always goes to the network and is never cached.
-const VERSION = 'pos-v1-202611251651';
+const VERSION = 'pos-v2-202611251651';
 const SHELL = ['./', './index.html', './manifest.webmanifest', './icons/icon-192.png', './icons/icon-512.png', './icons/apple-touch-icon.png', './icons/favicon-32.png'];
 
 self.addEventListener('install', e => {

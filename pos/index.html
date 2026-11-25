@@ -210,10 +210,33 @@ function toast(msg, err){ const d=document.createElement('div'); d.className='to
 function fail(e){ console.error(e); toast((e && e.message && !/fetch|network/i.test(e.message)) ? e.message : t('conn_err'), true); }
 
 /* ============================= DATA LAYER ============================= */
+/* The database only accepts real staff accounts (same as the PMS). Each device signs in once,
+   e.g. with the restaurant account; staff then log in with their name + PIN. */
 async function ensureAuth(){
   const { data:{ session } } = await sb.auth.getSession();
-  if(!session){ const { error } = await sb.auth.signInAnonymously(); if(error) throw error; }
+  if(session && session.user && session.user.is_anonymous){ await sb.auth.signOut({ scope:'local' }); return false; }
+  return !!session;
 }
+function renderDeviceLogin(err, typed){
+  const last = typed || LS.get('devEmail','');
+  document.getElementById('app').innerHTML = `<div class="login card">
+    <h2 style="margin:0 0 4px">Marina Restaurant POS</h2>
+    <div class="muted small" style="margin-bottom:12px">Masuk dengan akun staf (email & password yang sama dengan PMS), misalnya akun restoran. Cukup sekali di setiap perangkat.<br>Sign in with a staff account (same as the PMS), e.g. the restaurant account. Once per device.</div>
+    ${err?`<div class="banner" style="margin-bottom:10px">${esc(err)}</div>`:''}
+    <label class="small muted bold" for="dEmail">Email</label><input id="dEmail" type="email" autocomplete="username" style="margin:4px 0 10px" value="${esc(last)}">
+    <label class="small muted bold" for="dPass">Password</label><input id="dPass" type="password" autocomplete="current-password" style="margin:4px 0 10px" onkeydown="if(event.key==='Enter')deviceLogin()">
+    <button class="btn primary" style="width:100%" id="dGo" onclick="deviceLogin()">Masuk / Sign in</button></div>`;
+  setTimeout(()=>document.getElementById(last?'dPass':'dEmail').focus(),30);
+}
+async function deviceLogin(){
+  const email=document.getElementById('dEmail').value.trim(), password=document.getElementById('dPass').value;
+  if(!email||!password) return;
+  document.getElementById('dGo').disabled=true;
+  const { error } = await sb.auth.signInWithPassword({ email, password });
+  if(error){ renderDeviceLogin(/fetch|network/i.test(error.message||'') ? T.conn_err[0]+' / '+T.conn_err[1] : 'Email atau password salah. / Wrong email or password.', email); return; }
+  LS.set('devEmail', email); boot();
+}
+async function deviceLogout(){ logout(); await sb.auth.signOut({ scope:'local' }); renderDeviceLogin(); }
 const db = {
   async list(table, f, order){
     let q = sb.from(table).select('*');
@@ -373,7 +396,7 @@ function renderLogin(){
     <input id="loginPin" type="password" inputmode="numeric" autocomplete="off" style="margin:4px 0 10px" onkeydown="if(event.key==='Enter')login()">
     ${S.loginError?`<div class="pill red" style="margin-bottom:10px">${esc(S.loginError)}</div>`:''}
     <button class="btn primary" style="width:100%" onclick="login()">${t('login')}</button>
-    <div class="row" style="justify-content:center;margin-top:10px"><button class="btn sm" onclick="toggleLang()">${t('language')}</button></div></div>`;
+    <div class="row" style="justify-content:center;margin-top:10px"><button class="btn sm" onclick="toggleLang()">${t('language')}</button><button class="btn sm" onclick="deviceLogout()">${S.lang==='id'?'Ganti akun perangkat':'Switch device account'}</button></div></div>`;
 }
 async function login(){
   const id = document.getElementById('loginStaff').value, pin = document.getElementById('loginPin').value;
@@ -892,7 +915,7 @@ function reportHTML(r){
 /* ============================= BOOT ============================= */
 async function boot(){
   document.getElementById('app').innerHTML = '<div class="login card muted">Loading…</div>';
-  try{ await ensureAuth(); S.staffList = await db.rpc('pos_staff_list'); render(); }
+  try{ if(!(await ensureAuth())){ renderDeviceLogin(); return; } S.staffList = await db.rpc('pos_staff_list'); render(); }
   catch(e){ console.error(e); document.getElementById('app').innerHTML = `<div class="login card"><div class="banner">${T.conn_err[0]} / ${T.conn_err[1]}</div><button class="btn primary" onclick="boot()">Retry</button></div>`; }
 }
 boot();
