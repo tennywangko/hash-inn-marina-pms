@@ -1,0 +1,1050 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hash Inn Marina — Back Office</title>
+<meta name="theme-color" content="#0B2A4A">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Marina BO">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(e){console.warn('SW',e)})})}</script>
+
+<style>
+:root{--navy:#0B2A4A;--navy-2:#123A63;--navy-3:#1B4B7C;--accent:#4F9FD8;--accent-soft:#E9F3FB;--bg:#F2F6FA;--card:#fff;--border:#DFE6EE;--text:#152436;--muted:#66768A;
+--green:#2F9E5C;--green-soft:#E7F6EC;--amber:#C98A1E;--amber-soft:#FBF1DE;--red:#C24C43;--red-soft:#FBEAE8;--gray-soft:#EEF1F4;--radius:10px;--shadow:0 1px 2px rgba(11,42,74,.06),0 4px 14px rgba(11,42,74,.05)}
+*{box-sizing:border-box}
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;background:var(--bg);color:var(--text);font-size:14px}
+button{font-family:inherit;font-size:inherit;cursor:pointer}
+input,select,textarea{font-family:inherit;font-size:15px;padding:9px 10px;border:1px solid var(--border);border-radius:8px;background:#fff;color:var(--text);width:100%}
+input:focus,select:focus,button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+header{background:linear-gradient(135deg,var(--navy),var(--navy-3));color:#fff;padding:10px 16px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:10px}.brand-mark{width:34px;height:34px;border-radius:8px;background:var(--accent);display:flex;align-items:center;justify-content:center;font-weight:800;color:var(--navy);font-size:13px}
+.brand h1{font-size:15px;margin:0}.brand span{font-size:11px;color:#BFD9F0}
+.hdr-right{display:flex;align-items:center;gap:8px;font-size:12px;color:#BFD9F0}.hdr-right button{background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.25);padding:6px 10px;border-radius:8px;font-size:12px}
+nav{background:var(--navy-2);display:flex;gap:2px;padding:0 10px;overflow-x:auto;position:sticky;top:0;z-index:40}
+nav button{background:transparent;border:none;color:#CFE1F2;padding:12px 14px;font-size:13.5px;border-bottom:3px solid transparent;white-space:nowrap}
+nav button.active{color:#fff;border-bottom-color:var(--accent);font-weight:600}
+main{padding:14px 16px 60px;max-width:1200px;margin:0 auto}
+h2{font-size:17px;margin:2px 0 12px;color:var(--navy)}h3{font-size:14px;margin:0 0 8px;color:var(--navy)}
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);padding:14px}
+.muted{color:var(--muted)}.small{font-size:12px}.right{text-align:right}.bold{font-weight:700}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.spread{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.btn{border:1px solid var(--border);background:#fff;color:var(--text);padding:10px 14px;border-radius:8px;font-weight:600;min-height:42px}
+.btn.primary{background:var(--navy);border-color:var(--navy);color:#fff}.btn.green{background:var(--green);border-color:var(--green);color:#fff}
+.btn.danger{border-color:var(--red);color:var(--red)}.btn.sm{padding:6px 10px;min-height:32px;font-size:12.5px}.btn:disabled{opacity:.5}
+.pill{display:inline-block;padding:2px 8px;border-radius:20px;font-size:11.5px;font-weight:600}
+.pill.green{background:var(--green-soft);color:var(--green)}.pill.amber{background:var(--amber-soft);color:var(--amber)}.pill.red{background:var(--red-soft);color:var(--red)}.pill.gray{background:var(--gray-soft);color:var(--muted)}.pill.blue{background:var(--accent-soft);color:var(--navy-3)}
+.grid{display:grid;gap:10px}.kpis{grid-template-columns:repeat(auto-fit,minmax(170px,1fr))}.two{grid-template-columns:1fr 1fr}.three{grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
+.kpi .v{font-size:20px;font-weight:800;color:var(--navy)}.kpi .l{font-size:11.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px}.kpi .s{font-size:12px;color:var(--muted);margin-top:2px}
+.neg{color:var(--red)}.pos{color:var(--green)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}.chips button{border:1px solid var(--border);background:#fff;border-radius:20px;padding:8px 14px;font-weight:600;color:var(--muted)}
+.chips button.active{background:var(--navy);border-color:var(--navy);color:#fff}
+.modes{grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}.mode{border:2px solid var(--border);background:#fff;border-radius:var(--radius);padding:12px;text-align:left}
+.mode.active{border-color:var(--navy);background:var(--accent-soft)}.mode b{display:block;font-size:14px;color:var(--navy)}.mode span{font-size:12px;color:var(--muted)}
+label.f{display:block;font-size:12px;font-weight:600;color:var(--muted);margin:10px 0 4px}
+.formgrid{display:grid;grid-template-columns:1fr 1fr;gap:0 12px}
+table.t{width:100%;border-collapse:collapse}table.t th{font-size:11.5px;text-transform:uppercase;letter-spacing:.4px;color:var(--muted);text-align:left;padding:6px 8px;border-bottom:1px solid var(--border);white-space:nowrap}
+table.t td{padding:7px 8px;border-bottom:1px solid var(--border);vertical-align:top}table.t .right{text-align:right;white-space:nowrap}
+tr.sec td{background:var(--accent-soft);font-weight:700;color:var(--navy);font-size:12.5px;text-transform:uppercase;letter-spacing:.3px}
+tr.tot td{font-weight:700;border-top:2px solid var(--navy)}tr.big td{font-weight:800;font-size:15px;background:var(--gray-soft)}
+.voided td{text-decoration:line-through;color:var(--muted)}
+.banner{background:var(--amber-soft);color:#7a5410;border:1px solid #ecd9ae;border-radius:8px;padding:9px 12px;margin-bottom:12px;font-size:13px}
+.login{max-width:360px;margin:8vh auto 0}
+.toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--navy);color:#fff;padding:10px 16px;border-radius:8px;z-index:200;max-width:92vw}.toast.err{background:var(--red)}
+.modal-bg{position:fixed;inset:0;background:rgba(11,42,74,.45);display:flex;align-items:center;justify-content:center;z-index:100;padding:14px}
+.modal{background:#fff;border-radius:12px;padding:18px;width:100%;max-width:440px;max-height:90vh;overflow:auto}
+.scroll{overflow-x:auto}
+@media (max-width:760px){.two,.formgrid{grid-template-columns:1fr}main{padding:10px 10px 60px}.hide-m{display:none}}
+@media print{header,nav,.noprint,.toast{display:none !important}body{background:#fff}main{max-width:none;padding:0}.card{box-shadow:none;border:none;padding:0}}
+#printArea{display:none}
+.slip{border:1px solid #9aa5b1;border-radius:6px;padding:12px 14px;margin:0 auto 12px;break-inside:avoid;page-break-inside:avoid;font-size:12px;max-width:560px;background:#fff}
+.slip table.t td{padding:3px 6px}.slip-h{text-align:center;border-bottom:1px solid #9aa5b1;padding-bottom:5px;margin-bottom:6px}.slip-t{text-align:center;font-weight:700;margin:4px 0 8px;letter-spacing:.3px}
+.slip-sign{display:flex;justify-content:space-between;margin-top:10px;text-align:center}table.pr td{padding:4px 5px}table.pr input:disabled,table.pr select:disabled{background:transparent;border-color:transparent;color:var(--text)}
+@media print{body.printing #app,body.printing #modalBg{display:none !important}body.printing #printArea{display:block}#printArea .slip:nth-child(2n){page-break-after:always;break-after:page}}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script>
+const SUPABASE_URL = "https://tfdsunhhtmpjdlikozzf.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_NDXlrG9D4nlbRrjGcDcrGQ_8RSS-b3V";
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+const T = {
+  home:['Beranda','Home'], entry:['Catat','Record'], list:['Transaksi','Transactions'], cash:['Kas & Bank','Cash & Bank'], report:['Laporan','Report'], settings:['Pengaturan','Settings'],
+  login:['Masuk','Sign in'], name:['Nama','Name'], pin:['PIN','PIN'], wrong_pin:['PIN salah','Incorrect PIN'], locked:['Terlalu banyak percobaan. Coba lagi 5 menit lagi.','Too many attempts. Try again in 5 minutes.'], logout:['Keluar','Sign out'],
+  conn:['Koneksi bermasalah. Periksa internet lalu coba lagi.','Connection problem. Check the internet and try again.'], expired:['Sesi berakhir, silakan masuk lagi.','Session ended, please sign in again.'],
+  this_month:['Bulan ini','This month'], revenue:['Pendapatan','Revenue'], rev_hotel:['Pendapatan Hotel','Hotel revenue'], rev_resto:['Pendapatan Restoran','Restaurant revenue'],
+  expenses:['Pengeluaran operasional','Operating expenses'], op_profit:['Laba operasional','Operating profit'], occupancy:['Tingkat hunian','Occupancy'], adr:['Harga rata-rata kamar','Average room rate'],
+  balances:['Saldo hari ini','Balances today'], kasbon_open:['Kasbon belum lunas','Staff advances outstanding'], none:['Tidak ada','None'],
+  unmapped:['diterima dengan metode yang belum punya rekening (mis. QRIS / Transfer / Card lama). Pemilik bisa memetakannya di Pengaturan.','was received by methods with no bank account assigned (e.g. old QRIS / Transfer / Card). The owner can map them in Settings.'],
+  m_out:['Pengeluaran','Expense'], m_out_d:['Belanja, tagihan, gaji','Purchases, bills, payroll'], m_in:['Pemasukan','Income'], m_in_d:['Penjualan manual, setoran modal','Manual sales, owner capital'],
+  m_tr:['Setor / Transfer','Deposit / Transfer'], m_tr_d:['Pindah uang antar kas & bank','Move money between cash & bank'], m_kb:['Kasbon','Staff advance'], m_kb_d:['Beri atau terima pelunasan','Give or receive repayment'],
+  date:['Tanggal','Date'], dept:['Bagian','Department'], hotel:['Hotel','Hotel'], resto:['Restoran','Restaurant'], bar:['Bar','Bar'], bakery:['Bakery','Bakery'], umum:['Umum','General'],
+  category:['Kategori','Category'], choose:['— pilih —','— choose —'], qty:['Jumlah barang','Quantity'], unit:['Satuan','Unit'], unit_price:['Harga satuan','Unit price'], amount:['Total (Rp)','Total (Rp)'],
+  supplier:['Toko / Supplier','Shop / Supplier'], desc:['Keterangan','Description'], paid_from:['Dibayar dari','Paid from'], received_in:['Masuk ke','Received into'], from_acc:['Dari','From'], to_acc:['Ke','To'],
+  ref:['No. nota','Receipt no.'], person:['Nama karyawan','Staff name'], give:['Beri kasbon','Give advance'], repay:['Terima pelunasan','Receive repayment'],
+  save:['Simpan','Save'], saved:['Tersimpan','Saved'], today_entries:['Catatan hari ini','Today\'s entries'], by:['Oleh','By'], void:['Batalkan','Void'], reason:['Alasan','Reason'], cancel:['Batal','Cancel'], confirm:['Konfirmasi','Confirm'],
+  from:['Dari','From'], to:['Sampai','To'], show:['Tampilkan','Show'], search:['Cari…','Search…'], all:['Semua','All'], export:['Ekspor CSV','Export CSV'], print:['Cetak','Print'], total_out:['Total keluar','Total out'], total_in:['Total masuk','Total in'],
+  opening:['Saldo awal','Opening'], auto_in:['Masuk otomatis (PMS / POS)','Auto in (PMS / POS)'], manual_in:['Masuk manual','Manual in'], out:['Keluar','Out'], tr_in:['Transfer masuk','Transfer in'], tr_out:['Transfer keluar','Transfer out'],
+  closing:['Saldo seharusnya','Expected balance'], count:['Hitung kas','Count cash'], counted:['Uang dihitung','Cash counted'], diff:['Selisih','Difference'], note:['Catatan','Note'], last_count:['Hitungan terakhir','Last count'],
+  cash_start:['Saldo dihitung sejak','Balances are counted from'], prev:['‹ Sebelumnya','‹ Previous'], next:['Berikutnya ›','Next ›'],
+  s_revenue:['PENDAPATAN','REVENUE'], s_cogs:['BIAYA BAHAN','COST OF SALES'], s_opex:['BIAYA OPERASIONAL','OPERATING EXPENSES'], s_payroll:['GAJI & TENAGA KERJA','PAYROLL'], s_nonop:['ANGSURAN & INVESTASI','LOANS & INVESTMENT'],
+  t_revenue:['Total Pendapatan','Total revenue'], t_gross:['Laba kotor','Gross profit'], t_op:['LABA OPERASIONAL','OPERATING PROFIT'], t_after:['Sisa setelah angsuran & investasi','Left after loans & investment'],
+  pct:['% pendapatan','% of revenue'], total:['Total','Total'], not_profit:['Tidak dihitung sebagai laba/rugi','Not counted in profit'], prive:['Pengambilan pemilik','Owner drawings'], modal:['Setoran modal','Owner capital in'],
+  kb_given:['Kasbon diberikan','Advances given'], kb_repaid:['Kasbon dilunasi','Advances repaid'], money_in:['Uang diterima (PMS / POS)','Money received (PMS / POS)'], method:['Metode','Method'], account:['Rekening','Account'], source:['Sumber','Source'],
+  room_nights:['Malam kamar terjual','Room nights sold'], pbjt:['PBJT 10% di dalam pendapatan (perkiraan)','PBJT 10% inside revenue (estimate)'], rev_note:['Pendapatan hotel dihitung per malam menginap (dari PMS). Restoran dari tagihan lunas di POS dan catatan manual.','Hotel revenue is counted per night stayed (from the PMS). Restaurant comes from paid POS bills and manual entries.'],
+  users:['Pengguna','Users'], add_user:['Tambah admin','Add admin'], role:['Peran','Role'], active:['Aktif','Active'], new_pin:['PIN baru (kosongkan jika tidak diubah)','New PIN (blank = unchanged)'], edit:['Ubah','Edit'],
+  accounts:['Kas & rekening','Cash & bank accounts'], add_account:['Tambah rekening','Add account'], opening_bal:['Saldo awal','Opening balance'], categories:['Kategori','Categories'], add_category:['Tambah kategori','Add category'],
+  name_id:['Nama (Indonesia)','Name (Indonesian)'], name_en:['Nama (Inggris)','Name (English)'], section:['Kelompok','Group'], general:['Umum','General'], start_date:['Saldo dihitung sejak tanggal','Count balances from date'],
+  lock_days:['Admin boleh mengubah catatan sampai (hari ke belakang)','Admins may change entries up to (days back)'], mapping:['Metode pembayaran → rekening','Payment method → account'], owner_only:['Hanya pemilik','Owner only'], ledger:['Hutang & Piutang','Payables & Receivables'], unpaid_sup:['Belum dibayar (hutang supplier)','Not paid yet (supplier credit)'], unpaid_cust:['Belum diterima (piutang)','Not received yet (receivable)'],
+  due:['Jatuh tempo','Due date'], who_owes:['Nama yang berhutang','Name of who owes'], photo:['Foto nota','Receipt photo'], photo_ready:['Foto siap, akan diunggah saat disimpan','Photo ready, uploads when you save'],
+  relogin:['Foto gagal diunggah. Keluar lalu masuk lagi, kemudian coba lagi.','Photo upload failed. Sign out and in again, then retry.'], piutang:['Piutang (orang berhutang ke kita)','Receivables (owed to us)'], hutang:['Hutang supplier (kita berhutang)','Supplier payables (we owe)'],
+  receive:['Terima pelunasan','Receive payment'], pay_sup:['Bayar','Pay'], since:['Sejak','Since'], overdue:['Lewat jatuh tempo','Overdue'], excel:['Ekspor Excel','Export Excel'], balance:['Sisa','Balance'], paid_l:['Sudah dibayar','Paid'], kasbon_l:['Kasbon karyawan','Staff advances'],
+  piutang_s:['Piutang','Receivables'], hutang_s:['Hutang supplier','Supplier payables'], same_nota:['Item berikutnya masih dari nota yang sama','Next item is from the same receipt'], language:['English','Bahasa']
+};
+Object.assign(T, {
+  payroll:['Penggajian','Payroll'], gl:['Buku Besar','General Ledger'],
+  pr_v_run:['Penggajian bulan ini','Monthly payroll'], pr_v_staff:['Karyawan & aturan','Staff & rules'], pr_v_hist:['Riwayat','History'],
+  pr_unsaved:['Ada perubahan yang belum disimpan. Tetap pindah?','You have unsaved changes. Leave anyway?'], pr_unsaved_s:['Belum disimpan','Not saved'],
+  pr_st_draft:['Draft','Draft'], pr_st_posted:['Sudah diposting','Posted'], pr_st_record:['Arsip (sebelum buku dimulai)','Record only (before the books start)'],
+  pr_slips:['Cetak slip','Print slips'], pr_refill:['Isi kasbon & piutang dari buku','Fill advances & receivables from the books'], pr_refilled:['Kasbon & piutang diisi dari buku','Advances & receivables filled from the books'],
+  pr_save:['Simpan draft','Save draft'], pr_post:['Posting & bayar','Post & pay'], pr_unpost:['Batalkan posting','Undo posting'], pr_delete:['Hapus draft','Delete draft'],
+  pr_none:['Belum ada penggajian untuk','No payroll yet for'], pr_create:['Buat penggajian dari daftar karyawan','Create payroll from the staff list'], pr_people:['orang','people'],
+  pr_no_staff:['Belum ada karyawan. Tambahkan dulu di "Karyawan & aturan".','No staff yet. Add them under "Staff & rules" first.'],
+  pr_staff:['Karyawan','Staff'], pr_cost:['Biaya gaji','Payroll cost'], pr_cost_d:['Gaji diterima setelah potongan absen & terlambat','Pay earned after absence & lateness'], pr_kasbon_cut:['Dipotong kasbon & piutang','Cut for advances & receivables'],
+  pr_piutang_s:['piutang','receivables'], pr_to_pay:['Uang dibayarkan','Cash to pay'], pr_checks:['Pemeriksaan','Checks'], pr_ck_ok:['Tidak ada masalah','No issues'],
+  pr_ck_neg:['gaji diterima minus, kurangi potongan','take-home pay is below zero, reduce the deductions'], pr_ck_limit:['kasbon','advances at'], pr_limit:['batas','limit'],
+  pr_ck_kb_over:['kasbon dipotong lebih besar dari kasbon tercatat di buku:','advance cut is more than the advance recorded in the books:'],
+  pr_ck_kb_left:['masih ada kasbon yang belum dipotong:','advance still not cut:'], pr_ck_pt_other:['di luar buku piutang, akan dicatat sebagai Pendapatan Lainnya (potongan gaji)','is not in the receivables book; it will be recorded as Other income (salary deduction)'],
+  pr_ck_nobasic:['gaji pokok kosong','basic salary is empty'], pr_ck_missing:['karyawan aktif, belum ada di penggajian ini','active staff member not in this payroll'],
+  pr_ck_hist:['Tanggal bayar sebelum buku dimulai: penggajian ini hanya disimpan sebagai arsip, tidak masuk kas & laporan.','Pay date is before the books start: this payroll is kept as a record only, not in cash or reports.'],
+  pr_paydate:['Tanggal bayar','Pay date'], pr_rules:['Aturan','Rules'], pr_divisor:['gaji/hari = pokok ÷','day rate = basic ÷'], pr_ijin:['ijin','permitted leave'], pr_sakit:['sakit','sick'], pr_cut:['dipotong','deducted'], pr_nocut:['tidak dipotong','not deducted'],
+  pr_add:['Tambah ke daftar','Add to list'], pr_remove:['Hapus dari penggajian ini','Remove from this payroll'], pr_rec:['Buku:','Books:'], pr_posted_by:['Diposting oleh','Posted by'], pr_record_note:['arsip, tidak masuk kas','record only, not in cash'], pr_entries:['catatan kas','cash book entries'],
+  pr_c_basic:['Gaji pokok','Basic'], pr_c_fixed_allowance:['Tunj. tetap','Fixed allow.'], pr_c_overtime:['Lembur','Overtime'], pr_c_incentive:['Insentif','Incentive'], pr_c_transport:['Transport','Transport'],
+  pr_c_bonus_attendance:['Bonus hadir','Attend. bonus'], pr_c_bonus_other:['Bonus lain','Other bonus'], pr_c_days_alpa:['Alpa (hr)','Absent (d)'], pr_c_days_ijin:['Ijin (hr)','Leave (d)'], pr_c_days_sakit:['Sakit (hr)','Sick (d)'],
+  pr_c_absence:['Pot. absen','Absence cut'], pr_c_late_amount:['Terlambat','Late'], pr_c_earned:['Gaji diterima','Earned'], pr_c_kasbon:['Kasbon','Advance'], pr_c_piutang:['Piutang/lain','Recv./other'],
+  pr_c_thp:['Take home pay','Take-home pay'], pr_c_pct:['Kasbon %','Adv. %'], pr_c_pay_account:['Dibayar via','Paid from'],
+  pr_help:['Gaji diterima = semua penerimaan − potongan absen − terlambat. Take home pay = gaji diterima − kasbon − piutang/lain. Saat diposting, sistem mencatat biaya gaji per bagian, pelunasan kasbon dan piutang per orang, dan uang keluar sebesar take home pay dari rekening yang dipilih.',
+    'Earned = all pay items − absence cut − lateness. Take-home pay = earned − advances − receivables/other. When posted, the system records payroll cost by department, advance and receivable repayments per person, and cash out equal to take-home pay from the chosen account.'],
+  pr_post_d:['Sistem akan mencatat uang keluar berikut di Kas & Bank, biaya gaji di Laporan, dan memotong kasbon/piutang karyawan:','The system will record this cash out in Cash & Bank, payroll cost in the Report, and cut staff advances/receivables:'],
+  pr_post_hist:['Tanggal bayar sebelum buku dimulai, jadi penggajian ini hanya diarsipkan (tidak mengubah kas, laporan atau kasbon).','The pay date is before the books start, so this payroll is only archived (no change to cash, reports or advances).'],
+  pr_unpost_d:['Semua catatan kas dari penggajian ini akan dibatalkan dan penggajian kembali menjadi draft supaya bisa diperbaiki.','All cash book entries from this payroll will be voided and the payroll returns to draft so it can be corrected.'],
+  pr_add_emp:['Tambah karyawan','Add staff'], pr_position:['Jabatan','Position'], pr_divisor_l:['Gaji per hari = gaji pokok dibagi','Day rate = basic salary divided by'],
+  pr_ijin_l:['Potong gaji untuk hari ijin','Deduct pay for permitted leave days'], pr_sakit_l:['Potong gaji untuk hari sakit','Deduct pay for sick days'], pr_limit_l:['Batas kasbon (% dari gaji diterima)','Advance limit (% of pay earned)'],
+  pr_how:['Cara pakai','How it works'], pr_period:['Periode','Period'], pr_open:['Buka','Open'],
+  pr_how_steps:['<li>Isi daftar karyawan sekali (gaji pokok, tunjangan tetap, dibayar dari kas/bank mana).</li><li>Setiap akhir bulan: buka Penggajian bulan ini → Buat penggajian. Kasbon dan piutang yang tercatat di buku terisi otomatis.</li><li>Isi lembur, insentif, bonus, hari alpa/ijin/sakit dan terlambat. Periksa kotak Pemeriksaan.</li><li>Simpan draft. Pemilik menekan Posting & bayar.</li><li>Cetak slip untuk ditandatangani karyawan.</li>',
+    '<li>Fill the staff list once (basic salary, fixed allowance, paid from which cash/bank).</li><li>Each month end: open Monthly payroll → Create payroll. Advances and receivables in the books fill in automatically.</li><li>Enter overtime, incentives, bonuses, absent/leave/sick days and lateness. Review the Checks box.</li><li>Save the draft. The owner presses Post & pay.</li><li>Print slips for staff to sign.</li>'],
+  gl_tb:['Neraca saldo','Trial balance'], gl_bs:['Neraca','Balance sheet'], gl_is:['Laba rugi','Income statement'], gl_acct:['Buku besar per akun','Account ledger'], gl_ju:['Jurnal umum','Journal entries'], gl_coa:['Bagan akun','Chart of accounts'],
+  gl_period:['Periode','Period'], gl_code:['Kode','Code'], gl_credit:['Kredit','Credit'], gl_bal_dr:['Saldo debit','Debit balance'], gl_bal_cr:['Saldo kredit','Credit balance'],
+  gl_t_asset:['Aset','Assets'], gl_t_liability:['Kewajiban','Liabilities'], gl_t_equity:['Ekuitas','Equity'], gl_t_revenue:['Pendapatan','Revenue'], gl_t_expense:['Beban','Expenses'],
+  gl_balanced:['Seimbang','Balanced'], gl_unbalanced:['Tidak seimbang','Out of balance'], gl_tot_asset:['Total aset','Total assets'], gl_tot_liab:['Total kewajiban','Total liabilities'], gl_cur_profit:['Laba berjalan (sejak buku dimulai)','Profit to date (since the books started)'],
+  gl_tot_eq:['Total ekuitas','Total equity'], gl_tot_le:['Kewajiban + ekuitas','Liabilities + equity'], gl_bs_note:['Posisi per tanggal','Position as of'], gl_other_exp:['Beban lain-lain','Other expenses'], gl_net:['LABA BERSIH','NET PROFIT'],
+  gl_is_note:['Dari buku besar: termasuk penyusutan dan jurnal penyesuaian. Laporan di tab Laporan dihitung dari catatan harian.','From the ledger: includes depreciation and adjusting entries. The Report tab is built from daily entries.'],
+  gl_src_sa:['Saldo awal','Opening'], gl_src_bo:['Buku kas','Cash book'], gl_src_ju:['Jurnal','Journal'], gl_sign:['Saldo positif = debit, negatif = kredit.','Positive balance = debit, negative = credit.'],
+  gl_new_ju:['Jurnal baru','New journal entry'], gl_add_line:['Baris','Line'], gl_lines:['Baris','Lines'], gl_one_side:['Satu baris hanya boleh debit atau kredit','A line can be debit or credit, not both'],
+  gl_ju_note:['Untuk saldo awal aset & pinjaman, penyusutan, dan koreksi. Sebaiknya bersama akuntan.','For opening asset & loan balances, depreciation and corrections. Best done with your accountant.'],
+  gl_add_acc:['Tambah akun','Add account'], gl_coa_note:['Akun kas, bank dan kategori baru dibuat otomatis dari Pengaturan.','Cash, bank and new category accounts are created automatically from Settings.']
+});
+Object.assign(T, {
+  m_lo:['Antar usaha','Between businesses'], m_lo_d:['Pinjam / kembalikan ke Pecco dll','Lend / repay Pecco etc.'],
+  lo_out:['Uang keluar ke usaha lain','Money out to another business'], lo_in:['Uang masuk dari usaha lain','Money in from another business'], lo_name:['Nama usaha','Business name'],
+  lo_help:['Bukan pengeluaran atau pendapatan. Sistem mencatat siapa berhutang ke siapa.','Not an expense or income. The system tracks who owes whom.'],
+  antar:['Pinjaman antar usaha','Loans between businesses'], antar_s:['Antar usaha','Between businesses'], lo_owe_us:['berhutang ke kita','owes us'], lo_we_owe:['kita berhutang','we owe'],
+  lo_receive:['Terima pengembalian','Receive repayment'], lo_pay:['Bayar kembali','Pay back'],
+  stock:['Stok (uji coba)','Stock (trial)'], st_v_counts:['Hitungan stok','Stock counts'], st_v_cost:['Food cost (uji coba)','Food cost (trial)'],
+  st_trial:['Uji coba: hitungan stok dipakai untuk menghitung food cost yang sebenarnya, tetapi belum mengubah Laporan atau Buku Besar.','Trial: stock counts are used to work out real food cost, but they do not change the Report or the General Ledger yet.'],
+  st_new:['Hitungan baru','New count'], st_loc:['Lokasi','Location'], loc_dapur:['Dapur','Kitchen'], loc_bar:['Bar','Bar'], loc_bakery:['Bakery','Bakery'], loc_gudang:['Gudang','Store room'],
+  st_items:['Barang','Items'], st_value:['Nilai','Value'], st_final:['Final','Final'], st_view:['Lihat','View'], st_sheet:['Lembar hitung','Count sheet'], st_reopen:['Buka lagi','Reopen'], st_finalize:['Final','Finalise'],
+  st_none:['Belum ada hitungan. Mulai dengan hitungan di akhir bulan ini.','No counts yet. Start with a count at the end of this month.'],
+  st_help:['Hitung stok di setiap lokasi pada hari terakhir bulan (setelah tutup). Hitungan yang sudah Final dipakai untuk food cost.','Count stock in each location on the last day of the month (after closing). Finalised counts are used for food cost.'],
+  st_date:['Tanggal hitung','Count date'], st_item:['Barang','Item'], st_grp:['Kelompok','Group'], st_qty:['Jumlah','Qty'], st_cost:['Harga / satuan','Cost / unit'],
+  g_makanan:['Makanan','Food'], g_minuman:['Minuman','Beverage'], g_kue:['Kue / Bakery','Bakery'], g_pajangan:['Pajangan','Retail'],
+  st_copy:['Salin barang dari hitungan terakhir','Copy items from the last count'], st_copied:['Barang disalin dari hitungan','Items copied from the count of'], st_nolast:['Belum ada hitungan sebelumnya untuk lokasi ini','No earlier count for this location'],
+  st_save_final:['Simpan & final','Save & finalise'], back:['Kembali','Back'], st_noqty:['barang belum diisi jumlahnya dan akan dihitung 0. Lanjut?','items have no quantity and will count as 0. Continue?'],
+  st_form_help:['Harga per satuan terisi dari hitungan sebelumnya atau harga beli rata-rata 90 hari. Gunakan harga beli terakhir.','Unit cost fills in from the previous count or the 90-day average purchase price. Use the latest purchase price.'],
+  st_del_q:['Hapus hitungan ini?','Delete this count?'], st_last:['Terakhir','Last'],
+  st_open:['Stok awal','Opening stock'], st_buy:['Pembelian','Purchases'], st_close:['Stok akhir','Closing stock'], st_used:['Terpakai','Used'], st_sales:['Penjualan','Sales'], st_pct:['Food cost','Food cost'], st_pct_buy:['Pembelian ÷ penjualan','Purchases ÷ sales'],
+  st_open_from:['Stok awal dari','Opening stock from'], st_close_from:['Stok akhir dari','Closing stock from'],
+  st_w_open:['Belum ada hitungan bulan lalu: stok awal dianggap 0. Bulan pertama hanya menjadi titik awal.','No count from last month: opening stock counts as 0. The first month is only a starting point.'],
+  st_w_close:['Belum ada hitungan final di bulan ini: food cost belum bisa dihitung.','No finalised count this month yet: food cost cannot be worked out.'],
+  st_cost_help:['Terpakai = stok awal + pembelian (kategori Bahan Makanan/Minuman/Kue/Pajangan) − stok akhir. Food cost = terpakai ÷ penjualan (POS + catatan manual). Angka merah: di atas 40%.','Used = opening stock + purchases (Food/Beverage/Bakery/Retail ingredient categories) − closing stock. Food cost = used ÷ sales (POS + manual entries). Red: above 40%.']
+});
+const S = { lang: ls('lang','id'), token: sessionStorage.getItem('bo_token'), user:null, names:[], loginError:'', tab:'home', boot:null,
+  form:null, todayTx:[], list:null, listFrom:null, listTo:null, listQ:'', listDept:'all', cashDate:null, cash:null, month:null, pnl:null, home:null, modal:null, busy:false, ledger:null, photo:null, photoPath:null, sameNota:false,
+  prPeriod:null, pr:null, prLines:null, prView:'run', prDirty:false, prPayDate:null, prNote:'', gl:null, glFrom:null, glTo:null, glView:'tb', glAcct:null, juForm:null, stMonth:null, st:null, stView:'counts', stForm:null };
+function ls(k,d){ try{ const v=localStorage.getItem('bo_'+k); return v==null?d:JSON.parse(v);}catch(e){return d;} }
+function lsSet(k,v){ try{ localStorage.setItem('bo_'+k, JSON.stringify(v)); }catch(e){} }
+const t = k => (T[k]?T[k][S.lang==='id'?0:1]:k);
+const esc = s => String(s==null?'':s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const num = n => Math.round(n||0).toLocaleString('id-ID');
+const money = n => (n<0?'− ':'')+'Rp '+num(Math.abs(n||0));
+const today = () => S.boot ? S.boot.today : new Date(Date.now()+8*3600e3).toISOString().slice(0,10);
+const catName = c => S.lang==='id'?c.name_id:c.name_en;
+const accName = id => { const a=(S.boot.accounts||[]).find(x=>x.id===id); return a?a.name:id; };
+const DEPTS = ['hotel','resto','bar','bakery','umum'];
+function toast(m, err){ const d=document.createElement('div'); d.className='toast'+(err?' err':''); d.textContent=m; document.body.appendChild(d); setTimeout(()=>d.remove(), err?5000:2000); }
+function fail(e){ console.error(e); const m=(e&&e.message)||''; if(/SESSION_EXPIRED/.test(m)){ toast(t('expired'), true); doLogout(true); return; } toast(m && !/fetch|network/i.test(m) ? m : t('conn'), true); }
+
+async function ensureAuth(){ const { data:{ session } } = await sb.auth.getSession(); if(!session){ const { error } = await sb.auth.signInAnonymously(); if(error) throw error; } }
+async function call(fn, args){ const { data, error } = await sb.rpc(fn, args||{}); if(error) throw error; return data; }
+const api = (fn, args) => call(fn, Object.assign({ p_token:S.token }, args||{}));
+
+/* ---------- modal ---------- */
+function ask(cfg){ return new Promise(res=>{ S.modal={cfg,res}; renderModal(); }); }
+function renderModal(){
+  let bg=document.getElementById('modalBg'); if(!S.modal){ if(bg) bg.remove(); return; }
+  if(!bg){ bg=document.createElement('div'); bg.id='modalBg'; bg.className='modal-bg'; document.body.appendChild(bg); }
+  const c=S.modal.cfg;
+  bg.innerHTML=`<div class="modal" role="dialog" aria-modal="true"><h3>${esc(c.title)}</h3>${c.html||''}${(c.fields||[]).map(f=>`<label class="f" for="m_${f.id}">${esc(f.label)}</label>${
+    f.type==='select'?`<select id="m_${f.id}">${f.options.map(o=>`<option value="${esc(o[0])}" ${String(o[0])===String(f.value)?'selected':''}>${esc(o[1])}</option>`).join('')}</select>`
+    :f.type==='checkbox'?`<input type="checkbox" id="m_${f.id}" style="width:auto" ${f.value?'checked':''}>`
+    :`<input id="m_${f.id}" type="${f.type||'text'}" ${f.type==='number'||f.type==='password'?'inputmode="numeric"':''} value="${esc(f.value==null?'':f.value)}" autocomplete="off">`}`).join('')}
+    <div class="row" style="margin-top:16px;justify-content:flex-end"><button class="btn" onclick="closeModal(null)">${t('cancel')}</button><button class="btn primary" id="mOk" onclick="okModal()">${esc(c.ok||t('confirm'))}</button></div></div>`;
+  const first=bg.querySelector('input,select'); if(first) setTimeout(()=>first.focus(),30);
+  bg.onkeydown=e=>{ if(e.key==='Escape') closeModal(null); if(e.key==='Enter'){ e.preventDefault(); okModal(); } };
+}
+function okModal(){ const out={}; (S.modal.cfg.fields||[]).forEach(f=>{ const el=document.getElementById('m_'+f.id); out[f.id]=f.type==='checkbox'?el.checked:f.type==='number'?(parseInt(String(el.value).replace(/[^\d-]/g,''))||0):el.value.trim(); }); closeModal(out); }
+function closeModal(v){ const m=S.modal; S.modal=null; renderModal(); if(m) m.res(v); }
+
+/* ---------- boot / login ---------- */
+async function boot(){
+  document.getElementById('app').innerHTML='<div class="login card muted">Loading…</div>';
+  try{
+    await ensureAuth();
+    if(S.token){ try{ S.boot = await api('bo_bootstrap'); S.user=S.boot.user; }catch(e){ S.token=null; sessionStorage.removeItem('bo_token'); } }
+    if(!S.user) S.names = await call('bo_user_list');
+    render(); if(S.user) go('home');
+  }catch(e){ console.error(e); document.getElementById('app').innerHTML=`<div class="login card"><div class="banner">${T.conn[0]} / ${T.conn[1]}</div><button class="btn primary" onclick="boot()">Retry</button></div>`; }
+}
+async function login(){
+  const name=document.getElementById('lName').value, pin=document.getElementById('lPin').value; lsSet('lastName', name);
+  try{
+    const r = await call('bo_login', { p_name:name, p_pin:pin });
+    if(r.error){ S.loginError = r.error==='LOCKED'?t('locked'):t('wrong_pin'); render(); return; }
+    S.token=r.token; sessionStorage.setItem('bo_token', r.token); S.loginError='';
+    S.boot = await api('bo_bootstrap'); S.user=S.boot.user; go('home');
+  }catch(e){ fail(e); }
+}
+async function doLogout(silent){ const tk=S.token; S.token=null; S.user=null; S.boot=null; S.form=null; S.pnl=null; S.cash=null; S.list=null; S.home=null; S.ledger=null; S.photo=null; S.photoPath=null; S.pr=null; S.prLines=null; S.prDirty=false; S.gl=null; S.juForm=null; S.st=null; S.stForm=null; sessionStorage.removeItem('bo_token');
+  if(tk && !silent){ try{ await call('bo_logout', { p_token:tk }); }catch(e){} }
+  try{ S.names = await call('bo_user_list'); }catch(e){} render(); }
+async function reboot(){ S.boot = await api('bo_bootstrap'); }
+
+/* ---------- render ---------- */
+function render(){
+  const app=document.getElementById('app');
+  if(!S.user){ app.innerHTML=`<div class="login card"><div class="brand" style="margin-bottom:14px"><div class="brand-mark">BO</div><div><h2 style="margin:0">Back Office</h2><span class="muted small">Hash Inn Marina</span></div></div>
+    <label class="f" for="lName">${t('name')}</label><select id="lName">${S.names.map(n=>`<option ${ls('lastName','')===n?'selected':''}>${esc(n)}</option>`).join('')}</select>
+    <label class="f" for="lPin">${t('pin')}</label><input id="lPin" type="password" inputmode="numeric" autocomplete="off" onkeydown="if(event.key==='Enter')login()">
+    ${S.loginError?`<div class="pill red" style="margin-top:10px">${esc(S.loginError)}</div>`:''}
+    <button class="btn primary" style="width:100%;margin-top:14px" onclick="login()">${t('login')}</button>
+    <div class="row" style="justify-content:center;margin-top:10px"><button class="btn sm" onclick="toggleLang()">${t('language')}</button></div></div>`; return; }
+  const tabs=['home','entry','list','ledger','cash','report','payroll','stock','gl'].concat(S.user.role==='owner'?['settings']:[]);
+  app.innerHTML=`<header><div class="brand"><div class="brand-mark">BO</div><div><h1>Back Office</h1><span>Hash Inn Marina</span></div></div>
+    <div class="hdr-right"><span class="hide-m">${esc(S.user.name)} · ${S.user.role}</span><button onclick="toggleLang()">${t('language')}</button><button onclick="doLogout()">${t('logout')}</button></div></header>
+  <nav>${tabs.map(k=>`<button class="${S.tab===k?'active':''}" onclick="go('${k}')">${t(k)}</button>`).join('')}</nav>
+  <main>${({home:vHome,entry:vEntry,list:vList,ledger:vLedger,cash:vCash,report:vReport,settings:vSettings,payroll:vPayroll,gl:vGL,stock:vStock}[S.tab])()}</main>`;
+}
+function toggleLang(){ S.lang=S.lang==='id'?'en':'id'; lsSet('lang',S.lang); render(); }
+async function go(tab){
+  if(S.tab==='payroll' && tab!=='payroll' && S.prDirty && !confirm(t('pr_unsaved'))) return;
+  S.tab=tab; render();
+  try{
+    if(tab==='home') await loadHome();
+    if(tab==='entry'){ if(!S.form) newForm('out'); await loadToday(); }
+    if(tab==='list'){ if(!S.listFrom){ S.listFrom=today().slice(0,8)+'01'; S.listTo=today(); } await loadList(); }
+    if(tab==='ledger') await loadLedger();
+    if(tab==='cash'){ if(!S.cashDate) S.cashDate=today(); await loadCash(); }
+    if(tab==='report'){ if(!S.month) S.month=today().slice(0,7); await loadPnl(); }
+    if(tab==='settings') await reboot();
+    if(tab==='payroll'){ if(!S.prPeriod) S.prPeriod=prDefaultPeriod(); await loadPayroll(); }
+    if(tab==='stock'){ if(!S.stMonth) S.stMonth=today().slice(0,7); await loadStock(); }
+    if(tab==='gl'){ if(!S.glFrom){ const [a,b]=monthRange(today().slice(0,7)); S.glFrom=a; S.glTo=b>today()?today():b; } await loadGL(); }
+  }catch(e){ fail(e); }
+  render();
+}
+const monthRange = m => { const [y,mo]=m.split('-').map(Number); const last=new Date(Date.UTC(y,mo,0)).getUTCDate(); return [m+'-01', m+'-'+String(last).padStart(2,'0')]; };
+const monthLabel = m => { const [y,mo]=m.split('-').map(Number); return new Date(Date.UTC(y,mo-1,1)).toLocaleDateString(S.lang==='id'?'id-ID':'en-GB',{month:'long',year:'numeric',timeZone:'UTC'}); };
+
+/* ---------- P&L maths (shared by Home and Report) ---------- */
+function calcPnl(p){
+  const cols = DEPTS.filter(d=>d==='hotel'||d==='resto'||p.revenue.some(r=>r.dept===d)||p.expenses.some(e=>e.dept===d&&['cogs','opex','payroll','nonop'].includes(e.section)));
+  const sec = { revenue:{}, cogs:{}, opex:{}, payroll:{}, nonop:{} };
+  const add = (s,label,dept,amt,sort) => { const o=sec[s][label]||(sec[s][label]={label,sort:sort||0,by:{}}); o.by[dept]=(o.by[dept]||0)+amt; };
+  p.revenue.forEach(r=>add('revenue', r.label, r.dept, r.amount, r.label==='Diskon'?999:0));
+  p.expenses.forEach(e=>{ if(sec[e.section]) add(e.section, S.lang==='id'?e.name_id:e.name_en, e.dept, e.amount, e.sort); });
+  const rows = s => Object.values(sec[s]).sort((a,b)=>a.sort-b.sort || (sumBy(b.by)-sumBy(a.by)));
+  const sumBy = by => Object.values(by).reduce((a,b)=>a+b,0);
+  const tot = s => { const by={}; Object.values(sec[s]).forEach(o=>Object.entries(o.by).forEach(([d,a])=>by[d]=(by[d]||0)+a)); return by; };
+  const T_ = { revenue:tot('revenue'), cogs:tot('cogs'), opex:tot('opex'), payroll:tot('payroll'), nonop:tot('nonop') };
+  const comb = f => { const by={}; cols.forEach(d=>by[d]=f(d)); return by; };
+  const g = (s,d) => T_[s][d]||0;
+  const gross = comb(d=>g('revenue',d)-g('cogs',d)), op = comb(d=>g('revenue',d)-g('cogs',d)-g('opex',d)-g('payroll',d)), after = comb(d=>op[d]-g('nonop',d));
+  const other = k => p.expenses.filter(e=>e.section===k).reduce((a,e)=>a+e.amount,0);
+  const otherIn = k => p.other_in.filter(e=>e.section===k).reduce((a,e)=>a+e.amount,0);
+  return { cols, rows, sumBy, T_, gross, op, after, revTotal:sumBy(T_.revenue), prive:other('owner'), modal:otherIn('owner'), kbGiven:other('advance'), kbRepaid:otherIn('advance') };
+}
+
+/* ---------- HOME ---------- */
+async function loadHome(){ const m=today().slice(0,7); const [p,c,L] = await Promise.all([ api('bo_pnl', { p_from:m+'-01', p_to:today() }), api('bo_cash', { p_date:today() }), api('bo_ledgers') ]); S.home={ p, c, L }; }
+function vHome(){
+  if(!S.home) return `<div class="card muted">…</div>`;
+  const { p, c, L } = S.home, k = calcPnl(p), st=p.stats;
+  const sumB = l => l.reduce((a,x)=>a+x.balance,0), od = L.hutang.filter(x=>x.first_due && x.first_due < today()).length;
+  const hotelRoom = p.revenue.filter(r=>r.dept==='hotel'&&r.label==='Kamar').reduce((a,r)=>a+r.amount,0);
+  const occ = st.sellable_rooms? st.room_nights/(st.sellable_rooms*st.days)*100 : 0;
+  const unm = p.cash_in.filter(x=>x.account_id==='unmapped').reduce((a,x)=>a+x.amount,0);
+  const exp = k.sumBy(k.T_.cogs)+k.sumBy(k.T_.opex)+k.sumBy(k.T_.payroll), op=k.sumBy(k.op);
+  return `<h2>${t('this_month')} · ${monthLabel(today().slice(0,7))} <span class="muted small">(1 – ${Number(today().slice(8))})</span></h2>
+  ${unm?`<div class="banner"><b>${money(unm)}</b> ${t('unmapped')}</div>`:''}
+  <div class="grid kpis" style="margin-bottom:12px">
+    ${[[t('rev_hotel'),money(k.T_.revenue.hotel||0),''],[t('rev_resto'),money(k.revTotal-(k.T_.revenue.hotel||0)),st.pos_bills+' POS'],[t('expenses'),money(exp),''],[t('op_profit'),`<span class="${op<0?'neg':'pos'}">${money(op)}</span>`,k.revTotal?Math.round(op/k.revTotal*100)+'%':''],
+       [t('occupancy'),occ.toFixed(1)+'%',`${st.room_nights} / ${st.sellable_rooms*st.days}`],[t('adr'),money(st.room_nights?hotelRoom/st.room_nights:0),'']]
+      .map(x=>`<div class="card kpi"><div class="l">${x[0]}</div><div class="v">${x[1]}</div><div class="s">${x[2]}</div></div>`).join('')}
+  </div>
+  <div class="grid two">
+    <div class="card"><h3>${t('balances')}</h3><table class="t"><tbody>${c.accounts.filter(a=>a.type!=='system'||a.closing).map(a=>`<tr><td>${esc(a.name)}</td><td class="right bold ${a.closing<0?'neg':''}">${money(a.closing)}</td></tr>`).join('')}
+      <tr class="tot"><td>${t('total')}</td><td class="right">${money(c.accounts.reduce((s,a)=>s+a.closing,0))}</td></tr></tbody></table><div class="small muted" style="margin-top:6px">${t('cash_start')} ${c.start_date}</div></div>
+    <div class="card"><h3>${t('ledger')}</h3><table class="t"><tbody>
+      <tr><td>${t('piutang')} <span class="muted small">· ${L.piutang.length}</span></td><td class="right bold pos">${money(sumB(L.piutang))}</td></tr>
+      <tr><td>${t('hutang')} <span class="muted small">· ${L.hutang.length}</span>${od?` <span class="pill red">${od} ${t('overdue')}</span>`:''}</td><td class="right bold neg">${money(sumB(L.hutang))}</td></tr>
+      <tr><td>${t('kasbon_l')} <span class="muted small">· ${L.kasbon.length}</span></td><td class="right bold">${money(sumB(L.kasbon))}</td></tr>
+      ${(L.antar_usaha||[]).length?`<tr><td>${t('antar')} <span class="muted small">· ${L.antar_usaha.length}</span></td><td class="right bold">${money(sumB(L.antar_usaha))}</td></tr>`:''}</tbody></table>
+      <button class="btn sm" style="margin-top:10px" onclick="go('ledger')">${t('ledger')} ›</button></div>
+  </div>`;
+}
+
+/* ---------- ENTRY ---------- */
+function newForm(mode){
+  const dept = ls('lastDept','hotel');
+  S.form = { mode, tx_date:(S.form&&S.form.tx_date)||today(), dept, category_id:mode==='kb'?'adv_kasbon':'', account_id:dept==='hotel'?'kas_hotel':dept==='umum'?'kas_hotel':'kas_resto', to_account_id:'bca',
+             qty:'', unit:'', unit_price:'', amount:'', supplier:'', description:'', ref_no:'', person:'', due_date:'' };
+}
+function setMode(m){ newForm(m); render(); }
+function setDept(d){ readForm(); S.form.dept=d; lsSet('lastDept', d); if(S.form.mode!=='tr') S.form.account_id = d==='hotel'||d==='umum'?'kas_hotel':'kas_resto'; render(); }
+function readForm(){ const f=S.form, g=id=>{ const el=document.getElementById(id); return el?el.value.trim():undefined; };
+  ['tx_date','category_id','account_id','to_account_id','qty','unit','unit_price','amount','supplier','description','ref_no','person','due_date'].forEach(k=>{ const v=g('f_'+k); if(v!==undefined) f[k]=v; }); }
+function calcAmount(){ const q=parseFloat(document.getElementById('f_qty').value), p=parseFloat(document.getElementById('f_unit_price').value); if(q>0 && p>0) document.getElementById('f_amount').value=Math.round(q*p); showAmt(); }
+function showAmt(){ const v=parseInt(document.getElementById('f_amount').value)||0; document.getElementById('amtShow').textContent = v?money(v):''; }
+function vEntry(){
+  const f=S.form; if(!f) return '';
+  const cats = S.boot.categories.filter(c=>c.active);
+  const groups = f.mode==='out' ? [['cogs',t('s_cogs')],['opex',t('s_opex')],['payroll',t('s_payroll')],['nonop',t('s_nonop')],['owner',t('prive')]] : [['revenue',t('s_revenue')],['owner',t('modal')]];
+  const dir = f.mode==='out'?'out':'in';
+  const accs = S.boot.accounts.filter(a=>a.active && (a.type==='cash'||a.type==='bank'));
+  const accSel = (id, val, extra) => `<select id="${id}" ${extra?`onchange="readForm();render()"`:''}>${accs.map(a=>`<option value="${a.id}" ${a.id===val?'selected':''}>${esc(a.name)}</option>`).join('')}${extra?`<option value="${extra[0]}" ${extra[0]===val?'selected':''}>${esc(extra[1])}</option>`:''}</select>`;
+  return `<h2>${t('entry')}</h2>
+  <div class="grid modes" style="margin-bottom:12px">${[['out','m_out','m_out_d'],['in','m_in','m_in_d'],['tr','m_tr','m_tr_d'],['kb','m_kb','m_kb_d'],['lo','m_lo','m_lo_d']].map(m=>`<button class="mode ${f.mode===m[0]?'active':''}" onclick="setMode('${m[0]}')"><b>${t(m[1])}</b><span>${t(m[2])}</span></button>`).join('')}</div>
+  <div class="card">
+    <div class="formgrid">
+      <div><label class="f" for="f_tx_date">${t('date')}</label><input id="f_tx_date" type="date" value="${f.tx_date}" max="${today()}"></div>
+      ${f.mode==='tr'||f.mode==='lo'?'<div></div>':`<div><label class="f">${t('dept')}</label><div class="chips">${DEPTS.map(d=>`<button class="${f.dept===d?'active':''}" onclick="setDept('${d}')">${t(d)}</button>`).join('')}</div></div>`}
+    </div>
+    ${f.mode==='out'||f.mode==='in'?`<label class="f" for="f_category_id">${t('category')}</label><select id="f_category_id"><option value="">${t('choose')}</option>${groups.map(g=>{ const l=cats.filter(c=>c.section===g[0]&&c.direction===dir); return l.length?`<optgroup label="${esc(g[1])}">${l.map(c=>`<option value="${c.id}" ${c.id===f.category_id?'selected':''}>${esc(catName(c))}</option>`).join('')}</optgroup>`:''; }).join('')}</select>`:''}
+    ${f.mode==='kb'?`<label class="f">${t('m_kb')}</label><div class="chips"><button class="${f.category_id==='adv_kasbon'?'active':''}" onclick="readForm();S.form.category_id='adv_kasbon';render()">${t('give')}</button><button class="${f.category_id==='adv_bayar'?'active':''}" onclick="readForm();S.form.category_id='adv_bayar';render()">${t('repay')}</button></div>
+      <label class="f" for="f_person">${t('person')}</label><input id="f_person" list="dlPerson" value="${esc(f.person)}"><datalist id="dlPerson">${personList().map(x=>`<option value="${esc(x)}">`).join('')}</datalist>`:''}
+    ${f.mode==='lo'?`<label class="f">${t('m_lo')}</label><div class="chips"><button class="${f.lo_dir!=='in'?'active':''}" onclick="readForm();S.form.lo_dir='out';render()">${t('lo_out')}</button><button class="${f.lo_dir==='in'?'active':''}" onclick="readForm();S.form.lo_dir='in';render()">${t('lo_in')}</button></div>
+      <label class="f" for="f_person">${t('lo_name')}</label><input id="f_person" list="dlBiz" value="${esc(f.person)}" placeholder="Pecco"><datalist id="dlBiz">${[...new Set(['Pecco'].concat((S.ledger&&S.ledger.antar_usaha||[]).map(x=>x.name)))].map(x=>`<option value="${esc(x)}">`).join('')}</datalist><div class="small muted" style="margin-top:4px">${t('lo_help')}</div>`:''}
+    ${f.mode==='out'?`<div class="formgrid"><div><label class="f" for="f_supplier">${t('supplier')}</label><input id="f_supplier" list="dlSup" value="${esc(f.supplier)}"><datalist id="dlSup">${(S.boot.suppliers||[]).map(x=>`<option value="${esc(x)}">`).join('')}</datalist></div>
+      <div><label class="f" for="f_ref_no">${t('ref')}</label><input id="f_ref_no" value="${esc(f.ref_no)}"></div></div>`:''}
+    <label class="f" for="f_description">${t('desc')}</label><input id="f_description" value="${esc(f.description)}">
+    ${f.mode==='out'?`<div class="formgrid" style="grid-template-columns:1fr 1fr 1fr"><div><label class="f" for="f_qty">${t('qty')}</label><input id="f_qty" type="number" inputmode="decimal" value="${esc(f.qty)}" oninput="calcAmount()"></div>
+      <div><label class="f" for="f_unit">${t('unit')}</label><input id="f_unit" value="${esc(f.unit)}" placeholder="kg / pack / nota"></div>
+      <div><label class="f" for="f_unit_price">${t('unit_price')}</label><input id="f_unit_price" type="number" inputmode="numeric" value="${esc(f.unit_price)}" oninput="calcAmount()"></div></div>`:''}
+    <div class="formgrid"><div><label class="f" for="f_amount">${t('amount')}</label><input id="f_amount" type="number" inputmode="numeric" value="${esc(f.amount)}" oninput="showAmt()" style="font-size:18px;font-weight:700"><div class="small bold" id="amtShow" style="color:var(--navy-3);min-height:16px;margin-top:2px">${f.amount?money(parseInt(f.amount)):''}</div></div>
+      ${f.mode==='tr'?`<div class="formgrid"><div><label class="f" for="f_account_id">${t('from_acc')}</label>${accSel('f_account_id', f.account_id)}</div><div><label class="f" for="f_to_account_id">${t('to_acc')}</label>${accSel('f_to_account_id', f.to_account_id)}</div></div>`
+        :f.mode==='lo'?`<div><label class="f" for="f_account_id">${f.lo_dir!=='in'?t('paid_from'):t('received_in')}</label>${accSel('f_account_id', f.account_id)}</div>`
+        :`<div><label class="f" for="f_account_id">${(f.mode==='out'||(f.mode==='kb'&&f.category_id==='adv_kasbon'))?t('paid_from'):t('received_in')}</label>${accSel('f_account_id', f.account_id, f.mode==='out'?['hutang',t('unpaid_sup')]:f.mode==='in'?['piutang',t('unpaid_cust')]:null)}</div>`}</div>
+    ${f.mode==='out'&&f.account_id==='hutang'?`<label class="f" for="f_due_date">${t('due')}</label><input id="f_due_date" type="date" value="${esc(f.due_date)}" style="max-width:220px">`:''}
+    ${f.mode==='in'&&f.account_id==='piutang'?`<label class="f" for="f_person">${t('who_owes')}</label><input id="f_person" list="dlPerson" value="${esc(f.person)}"><datalist id="dlPerson">${personList().map(x=>`<option value="${esc(x)}">`).join('')}</datalist>`:''}
+    ${f.mode==='out'?`<label class="f" for="f_photo">${t('photo')}</label><input id="f_photo" type="file" accept="image/*" capture="environment" onchange="pickPhoto(this)" style="max-width:360px"><div class="small muted" id="photoInfo">${S.photo||S.photoPath?t('photo_ready'):''}</div>`:''}
+    <div class="row" style="margin-top:14px"><button class="btn green" style="min-width:160px" onclick="saveForm()">${t('save')}</button>
+      ${f.mode==='out'?`<label class="row small"><input type="checkbox" id="f_same" style="width:auto" ${S.sameNota?'checked':''} onchange="S.sameNota=this.checked"> ${t('same_nota')}</label>`:''}</div>
+  </div>
+  <h3 style="margin-top:18px">${t('today_entries')} (${S.todayTx.filter(x=>!x.voided).length})</h3>
+  <div class="card scroll">${txTable(S.todayTx, true)}</div>`;
+}
+async function saveForm(){
+  if(S.busy) return; readForm(); const f=S.form;
+  const amount=parseInt(f.amount)||0;
+  const p = { tx_date:f.tx_date, direction:f.mode==='tr'?'transfer':(f.mode==='out'||f.category_id==='adv_kasbon')?'out':'in', dept:f.mode==='tr'?'umum':f.dept, category_id:f.category_id, account_id:f.account_id, to_account_id:f.to_account_id,
+    amount, description:f.description, supplier:f.supplier||'', person:f.person||'', qty:f.qty||'', unit:f.unit||'', unit_price:f.unit_price||'', ref_no:f.ref_no||'', due_date:f.account_id==='hutang'?(f.due_date||''):'' };
+  if(!amount){ toast(t('amount')+'?', true); return; }
+  if(f.mode==='lo'){ if(!f.person){ toast(t('lo_name')+'?', true); return; } const out=f.lo_dir!=='in'; Object.assign(p, { direction:'transfer', dept:'umum', category_id:null, account_id:out?f.account_id:'antar_usaha', to_account_id:out?'antar_usaha':f.account_id }); }
+  if(f.mode!=='tr' && f.mode!=='lo' && !f.category_id){ toast(t('category')+'?', true); return; }
+  if(f.mode==='tr' && f.account_id===f.to_account_id){ toast(t('to_acc')+'?', true); return; }
+  if(f.account_id==='hutang' && !f.supplier){ toast(t('supplier')+'?', true); return; }
+  if(f.account_id==='piutang' && !f.person){ toast(t('who_owes')+'?', true); return; }
+  S.busy=true;
+  try{
+    if(f.mode==='out' && (S.photo || S.photoPath)){ if(!S.photoPath) S.photoPath = await uploadReceipt(S.photo, f.tx_date); p.receipt_path = S.photoPath; }
+    await api('bo_save_tx', { p }); toast(t('saved')+' · '+money(amount));
+    if(!(f.mode==='out' && S.sameNota)){ S.photo=null; S.photoPath=null; }
+    const keep={ mode:f.mode, tx_date:f.tx_date, cat:f.category_id, acc:f.account_id, sup:f.supplier, ref:f.ref_no };
+    newForm(f.mode); S.form.tx_date=keep.tx_date; S.form.account_id=keep.acc; if(f.mode==='out' && S.sameNota){ S.form.category_id=keep.cat; S.form.supplier=keep.sup; S.form.ref_no=keep.ref; if(keep.acc==='hutang') S.form.due_date=f.due_date; } if(f.mode==='kb') S.form.category_id=keep.cat; if(f.mode==='lo') S.form.lo_dir=f.lo_dir;
+    await Promise.all([loadToday(), reboot()]); S.home=null; S.ledger=null; render(); const el=document.getElementById(f.mode==='out'?'f_description':'f_amount'); if(el) el.focus();
+  }catch(e){ fail(e); } finally{ S.busy=false; }
+}
+async function loadToday(){ S.todayTx = (await api('bo_list_tx', { p_from:today(), p_to:today() })); }
+function txTable(list, compact){
+  if(!list.length) return `<div class="muted">${t('none')}</div>`;
+  const cat = id => { const c=S.boot.categories.find(x=>x.id===id); return c?catName(c):''; };
+  return `<table class="t"><thead><tr>${compact?'':`<th>${t('date')}</th>`}<th>${t('dept')}</th><th>${t('category')}</th><th>${t('desc')}</th><th>${t('account')}</th><th class="right">${t('amount')}</th><th>${t('by')}</th><th class="noprint"></th></tr></thead><tbody>
+  ${list.map(x=>`<tr class="${x.voided?'voided':''}">${compact?'':`<td style="white-space:nowrap">${x.tx_date}</td>`}<td>${x.direction==='transfer'?'—':t(x.dept)}</td>
+    <td>${x.direction==='transfer'?`<span class="pill blue">${t('m_tr')}</span>`:esc(cat(x.category_id))}${x.person?` · <b>${esc(x.person)}</b>`:''}</td>
+    <td>${esc([x.supplier, x.description, x.qty?`${Number(x.qty)} ${x.unit||''} × ${num(x.unit_price)}`:'', x.ref_no?'#'+x.ref_no:'', x.due_date?t('due')+' '+x.due_date:''].filter(Boolean).join(' · '))}${x.voided?` <span class="small">[${esc(x.void_reason)} · ${esc(x.voided_by)}]</span>`:''}</td>
+    <td>${esc(accName(x.account_id))}${x.to_account_id?' → '+esc(accName(x.to_account_id)):''}</td>
+    <td class="right bold ${x.direction==='out'?'neg':x.direction==='in'?'pos':''}">${x.direction==='out'?'− ':x.direction==='in'?'+ ':''}${num(x.amount)}</td><td class="small muted">${esc(x.created_by)}</td>
+    <td class="noprint" style="white-space:nowrap">${x.receipt_path?`<button class="btn sm" aria-label="${t('photo')}" onclick="viewReceipt('${esc(x.receipt_path)}')">📎</button> `:(x.direction==='out'&&!x.voided?`<label class="btn sm" style="display:inline-flex;align-items:center;cursor:pointer" aria-label="${t('photo')}">📷<input type="file" accept="image/*" hidden onchange="attachPhoto('${x.id}',this)"></label> `:'')}${x.voided?'':`<button class="btn sm danger" onclick="voidTx('${x.id}')">${t('void')}</button>`}</td></tr>`).join('')}</tbody></table>`;
+}
+async function voidTx(id){
+  const r = await ask({ title:t('void'), fields:[{ id:'reason', label:t('reason'), value:'' }] }); if(!r) return; if(!r.reason){ toast(t('reason')+'?', true); return; }
+  try{ await api('bo_void_tx', { p_id:id, p_reason:r.reason }); S.home=null; S.ledger=null; if(S.tab==='entry') await loadToday(); else await loadList(); render(); }catch(e){ fail(e); }
+}
+
+/* ---------- RECEIPT PHOTOS ---------- */
+function compressImage(file){ return new Promise((res,rej)=>{ const img=new Image(), url=URL.createObjectURL(file);
+  img.onload=()=>{ const sc=Math.min(1, 1400/Math.max(img.width,img.height)); const c=document.createElement('canvas'); c.width=Math.round(img.width*sc); c.height=Math.round(img.height*sc);
+    c.getContext('2d').drawImage(img,0,0,c.width,c.height); URL.revokeObjectURL(url); c.toBlob(b=>b?res(b):rej(new Error('Foto tidak bisa diproses / cannot process photo')),'image/jpeg',0.7); };
+  img.onerror=()=>{ URL.revokeObjectURL(url); rej(new Error('Foto tidak bisa dibaca. Gunakan JPG atau PNG. / Cannot read photo. Use JPG or PNG.')); }; img.src=url; }); }
+const uuid = () => (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c=>{ const r=Math.random()*16|0; return (c==='x'?r:(r&3|8)).toString(16); });
+async function uploadReceipt(blob, date){ const path=`${date.slice(0,7)}/${uuid()}.jpg`; const { error } = await sb.storage.from('bo-receipts').upload(path, blob, { contentType:'image/jpeg' }); if(error) throw new Error(t('relogin')); return path; }
+async function pickPhoto(input){ const f=input.files[0]; if(!f) return; try{ S.photo = await compressImage(f); S.photoPath=null; document.getElementById('photoInfo').textContent = t('photo_ready')+' · '+Math.round(S.photo.size/1024)+' KB'; }catch(e){ input.value=''; fail(e); } }
+async function viewReceipt(path){ try{ const { data, error } = await sb.storage.from('bo-receipts').createSignedUrl(path, 300); if(error) throw error;
+  await ask({ title:t('photo'), html:`<img src="${esc(data.signedUrl)}" alt="${t('photo')}" style="max-width:100%;border-radius:8px">`, ok:'OK' }); }catch(e){ fail(e); } }
+async function attachPhoto(id, input){ const f=input.files[0]; if(!f) return;
+  try{ const tx=(S.todayTx||[]).concat(S.list||[]).find(x=>x.id===id); const path=await uploadReceipt(await compressImage(f), tx.tx_date); await api('bo_set_receipt', { p_id:id, p_path:path });
+    if(S.tab==='entry') await loadToday(); else await loadList(); render(); toast(t('saved')); }catch(e){ fail(e); } }
+
+/* ---------- PAYABLES & RECEIVABLES ---------- */
+async function loadLedger(){ S.ledger = await api('bo_ledgers'); }
+function vLedger(){
+  const L=S.ledger; if(!L) return `<div class="card muted">…</div>`;
+  const block = (kind, title, list, btn) => `<div class="card"><div class="spread"><h3 style="margin:0">${title}</h3><b>${money(list.reduce((a,x)=>a+x.balance,0))}</b></div>
+    ${list.length?list.map((x,i)=>{ const late = kind==='hutang' && x.first_due && x.first_due < L.today; return `<details style="border-top:1px solid var(--border);padding:8px 0"><summary style="cursor:pointer"><span class="spread" style="display:inline-flex;width:calc(100% - 20px)"><span><b>${esc(x.name)}</b>
+        <span class="small muted">· ${t('since')} ${x.oldest}${x.first_due?` · ${t('due')} ${x.first_due}`:''}</span>${late?` <span class="pill red">${t('overdue')}</span>`:''}</span><b>${money(x.balance)}${kind==='antar_usaha'?` <span class="small muted">${x.balance>0?t('lo_owe_us'):t('lo_we_owe')}</span>`:''}</b></span></summary>
+      <div style="padding:8px 0 0 4px"><div class="small muted">${t('total')} ${money(x.total)} · ${t('paid_l')} ${money(x.paid)}${x.last_paid?' ('+x.last_paid+')':''}</div>
+        ${x.items?`<table class="t" style="margin-top:4px"><tbody>${x.items.slice(0,30).map(it=>`<tr><td class="small" style="white-space:nowrap">${it.date}</td><td class="small">${esc([it.desc, it.ref?'#'+it.ref:'', it.due?t('due')+' '+it.due:''].filter(Boolean).join(' · '))||'—'}</td><td class="right small">${num(it.amount)}</td></tr>`).join('')}</tbody></table>`:''}
+        <button class="btn sm primary" style="margin-top:8px" onclick="settle('${kind}',${i})">${typeof btn==='function'?btn(x):btn}</button></div></details>`; }).join(''):`<div class="muted" style="margin-top:8px">${t('none')}</div>`}</div>`;
+  return `<h2>${t('ledger')}</h2><div class="grid three">${block('piutang', t('piutang'), L.piutang, t('receive'))}${block('hutang', t('hutang'), L.hutang, t('pay_sup'))}${block('kasbon', t('kasbon_l'), L.kasbon, t('receive'))}${block('antar_usaha', t('antar'), L.antar_usaha||[], x=>x.balance>0?t('lo_receive'):t('lo_pay'))}</div>`;
+}
+async function settle(kind, i){
+  const x=S.ledger[kind][i], accs=S.boot.accounts.filter(a=>a.active && (a.type==='cash'||a.type==='bank'));
+  const r = await ask({ title:`${kind==='hutang'?t('pay_sup'):kind==='antar_usaha'?(x.balance>0?t('lo_receive'):t('lo_pay')):t('receive')} · ${x.name}`, html:`<div>${t('balance')}: <b>${money(x.balance)}</b></div>`, ok:t('save'),
+    fields:[{ id:'amount', label:t('amount'), type:'number', value:Math.abs(x.balance) }, { id:'acc', label:(kind==='hutang'||(kind==='antar_usaha'&&x.balance<0))?t('paid_from'):t('received_in'), type:'select', value:'kas_resto', options:accs.map(a=>[a.id,a.name]) }, { id:'date', label:t('date'), type:'date', value:today() }] });
+  if(!r) return; if(r.amount<=0){ toast(t('amount')+'?', true); return; }
+  const p = kind==='antar_usaha' ? (x.balance>0 ? { tx_date:r.date, direction:'transfer', account_id:'antar_usaha', to_account_id:r.acc, amount:r.amount, person:x.name } : { tx_date:r.date, direction:'transfer', account_id:r.acc, to_account_id:'antar_usaha', amount:r.amount, person:x.name })
+          : kind==='piutang' ? { tx_date:r.date, direction:'transfer', account_id:'piutang', to_account_id:r.acc, amount:r.amount, person:x.name }
+          : kind==='hutang' ? { tx_date:r.date, direction:'transfer', account_id:r.acc, to_account_id:'hutang', amount:r.amount, supplier:x.name }
+          : { tx_date:r.date, direction:'in', dept:'umum', category_id:'adv_bayar', account_id:r.acc, amount:r.amount, person:x.name };
+  try{ await api('bo_save_tx', { p }); S.home=null; await loadLedger(); render(); toast(t('saved')+' · '+money(r.amount)); }catch(e){ fail(e); }
+}
+
+/* ---------- LIST ---------- */
+async function loadList(){ S.list = await api('bo_list_tx', { p_from:S.listFrom, p_to:S.listTo }); }
+function filteredList(){ const q=S.listQ.toLowerCase(); return (S.list||[]).filter(x=>(S.listDept==='all'||x.dept===S.listDept) && (!q || [x.description,x.supplier,x.person,x.ref_no,(S.boot.categories.find(c=>c.id===x.category_id)||{}).name_id].join(' ').toLowerCase().includes(q))); }
+function vList(){
+  const l=filteredList(), live=l.filter(x=>!x.voided);
+  const out=live.filter(x=>x.direction==='out').reduce((a,x)=>a+x.amount,0), inn=live.filter(x=>x.direction==='in').reduce((a,x)=>a+x.amount,0);
+  return `<div class="spread noprint" style="margin-bottom:10px"><h2 style="margin:0">${t('list')}</h2><div class="row">
+    <input type="date" aria-label="${t('from')}" value="${S.listFrom||''}" onchange="S.listFrom=this.value" style="width:auto"><input type="date" aria-label="${t('to')}" value="${S.listTo||''}" onchange="S.listTo=this.value" style="width:auto">
+    <button class="btn primary sm" onclick="go('list')">${t('show')}</button><button class="btn sm" onclick="exportList()">${t('export')}</button></div></div>
+  <div class="row noprint" style="margin-bottom:10px"><input placeholder="${t('search')}" aria-label="${t('search')}" value="${esc(S.listQ)}" oninput="S.listQ=this.value;document.getElementById('listBody').innerHTML=listBody()" style="max-width:260px">
+    <div class="chips">${['all'].concat(DEPTS).map(d=>`<button class="${S.listDept===d?'active':''}" onclick="S.listDept='${d}';render()">${t(d)}</button>`).join('')}</div></div>
+  <div id="listBody">${listBody()}</div>`;
+}
+function listBody(){ const l=filteredList(), live=l.filter(x=>!x.voided); const out=live.filter(x=>x.direction==='out').reduce((a,x)=>a+x.amount,0), inn=live.filter(x=>x.direction==='in').reduce((a,x)=>a+x.amount,0);
+  return `<div class="row" style="margin-bottom:8px"><span class="pill red">${t('total_out')}: ${money(out)}</span><span class="pill green">${t('total_in')}: ${money(inn)}</span><span class="muted small">${l.length}</span></div><div class="card scroll">${txTable(l, false)}</div>`; }
+function csvDownload(rows, name){ const q=v=>'"'+String(v==null?'':v).replace(/"/g,'""')+'"'; const csv='﻿'+rows.map(r=>r.map(q).join(',')).join('\r\n');
+  const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'})); a.download=name; document.body.appendChild(a); a.click(); a.remove(); }
+function exportList(){ const cat=id=>(S.boot.categories.find(c=>c.id===id)||{}).name_id||''; const rows=[['Tanggal','Arah','Bagian','Kategori','Supplier','Keterangan','Qty','Satuan','Harga satuan','Total','Rekening','Ke rekening','Nama','No nota','Oleh','Batal','Alasan batal']];
+  filteredList().forEach(x=>rows.push([x.tx_date,x.direction,x.dept,cat(x.category_id),x.supplier,x.description,x.qty,x.unit,x.unit_price,x.amount,accName(x.account_id),x.to_account_id?accName(x.to_account_id):'',x.person,x.ref_no,x.created_by,x.voided?'ya':'',x.void_reason||'']));
+  csvDownload(rows, `transaksi-${S.listFrom}_${S.listTo}.csv`); }
+
+/* ---------- CASH ---------- */
+async function loadCash(){ S.cash = await api('bo_cash', { p_date:S.cashDate }); }
+function shiftDate(n){ const d=new Date(S.cashDate+'T00:00:00Z'); d.setUTCDate(d.getUTCDate()+n); const s=d.toISOString().slice(0,10); if(s>today()) return; S.cashDate=s; go('cash'); }
+function vCash(){
+  const c=S.cash; if(!c) return `<div class="card muted">…</div>`;
+  const line=(l,v,cls)=>v?`<tr><td>${l}</td><td class="right ${cls||''}">${v>0&&cls==='pos'?'+ ':''}${cls==='neg'?'− ':''}${num(Math.abs(v))}</td></tr>`:'';
+  return `<div class="spread" style="margin-bottom:10px"><h2 style="margin:0">${t('cash')}</h2><div class="row"><button class="btn sm" onclick="shiftDate(-1)">${t('prev')}</button>
+    <input type="date" aria-label="${t('date')}" value="${S.cashDate}" max="${today()}" onchange="S.cashDate=this.value;go('cash')" style="width:auto"><button class="btn sm" onclick="shiftDate(1)" ${S.cashDate>=today()?'disabled':''}>${t('next')}</button></div></div>
+  <div class="small muted" style="margin-bottom:10px">${t('cash_start')} ${c.start_date}</div>
+  <div class="grid three">${c.accounts.filter(a=>a.type!=='system'||a.closing||a.auto_in).map(a=>{ const lc=a.last_count; return `<div class="card"><div class="spread"><h3 style="margin:0">${esc(a.name)}</h3><span class="pill ${a.type==='cash'?'amber':a.type==='bank'?'blue':'red'}">${a.type}</span></div>
+    <table class="t" style="margin-top:6px"><tbody><tr><td>${t('opening')}</td><td class="right">${num(a.opening)}</td></tr>
+      ${line(t('auto_in'),a.auto_in,'pos')}${(a.auto_detail||[]).map(d=>`<tr><td class="small muted" style="padding-left:18px">${d.source.toUpperCase()} · ${esc(d.method)}</td><td class="right small muted">${num(d.amount)}</td></tr>`).join('')}
+      ${line(t('manual_in'),a.manual_in,'pos')}${line(t('tr_in'),a.transfer_in,'pos')}${line(t('out'),a.out,'neg')}${line(t('tr_out'),a.transfer_out,'neg')}
+      <tr class="tot"><td>${t('closing')}</td><td class="right ${a.closing<0?'neg':''}">${money(a.closing)}</td></tr></tbody></table>
+    ${lc?`<div class="small" style="margin-top:8px">${t('last_count')}: <b>${money(lc.counted)}</b> · ${t('diff')} <b class="${lc.counted-lc.expected?'neg':'pos'}">${money(lc.counted-lc.expected)}</b> · ${esc(lc.by)}${lc.note?' · '+esc(lc.note):''}</div>`:''}
+    ${a.type==='cash'?`<button class="btn sm primary" style="margin-top:10px" onclick="countCash('${a.id}')">${t('count')}</button>`:''}</div>`; }).join('')}</div>`;
+}
+async function countCash(id){
+  const a=S.cash.accounts.find(x=>x.id===id);
+  const r = await ask({ title:`${t('count')} · ${a.name}`, html:`<div>${t('closing')}: <b>${money(a.closing)}</b></div>`, fields:[{ id:'counted', label:t('counted'), type:'number', value:'' }, { id:'note', label:t('note'), value:'' }], ok:t('save') });
+  if(!r) return;
+  try{ await api('bo_save_count', { p_date:S.cashDate, p_account:id, p_expected:a.closing, p_counted:r.counted, p_note:r.note }); await loadCash(); render(); toast(`${t('diff')}: ${money(r.counted-a.closing)}`, r.counted!==a.closing); }catch(e){ fail(e); }
+}
+
+/* ---------- REPORT ---------- */
+async function loadPnl(){ const [a,b]=monthRange(S.month); S.pnl = await api('bo_pnl', { p_from:a, p_to: b>today()&&S.month===today().slice(0,7)?today():b }); }
+function shiftMonth(n){ const [y,m]=S.month.split('-').map(Number); const d=new Date(Date.UTC(y,m-1+n,1)); const s=d.toISOString().slice(0,7); if(s>today().slice(0,7)) return; S.month=s; S.pnl=null; go('report'); }
+function pnlRows(){
+  const p=S.pnl, k=calcPnl(p), cols=k.cols, rows=[];
+  const cells = by => cols.map(d=>by[d]||0).concat([k.sumBy(by)]);
+  const sec=(key,label)=>{ const r=k.rows(key); if(!r.length && key!=='revenue') return; rows.push({ type:'sec', label }); r.forEach(o=>rows.push({ type:'line', label:o.label, v:cells(o.by) })); };
+  sec('revenue', t('s_revenue')); rows.push({ type:'tot', label:t('t_revenue'), v:cells(k.T_.revenue) });
+  sec('cogs', t('s_cogs')); rows.push({ type:'tot', label:t('t_gross'), v:cells(k.gross) });
+  sec('opex', t('s_opex')); sec('payroll', t('s_payroll')); rows.push({ type:'big', label:t('t_op'), v:cells(k.op) });
+  if(k.rows('nonop').length){ sec('nonop', t('s_nonop')); rows.push({ type:'tot', label:t('t_after'), v:cells(k.after) }); }
+  return { k, cols, rows };
+}
+function vReport(){
+  const p=S.pnl; if(!p) return `<div class="card muted">…</div>`;
+  const { k, cols, rows } = pnlRows(), st=p.stats, rev=k.revTotal;
+  const room = p.revenue.filter(r=>r.dept==='hotel'&&r.label==='Kamar').reduce((a,r)=>a+r.amount,0);
+  const occ = st.sellable_rooms? st.room_nights/(st.sellable_rooms*st.days)*100 : 0;
+  return `<div class="spread" style="margin-bottom:10px"><h2 style="margin:0">${t('report')} · ${monthLabel(S.month)} <span class="muted small">${p.from} — ${p.to}</span></h2>
+    <div class="row noprint"><button class="btn sm" onclick="shiftMonth(-1)">${t('prev')}</button><button class="btn sm" onclick="shiftMonth(1)" ${S.month>=today().slice(0,7)?'disabled':''}>${t('next')}</button>
+    <button class="btn sm primary" onclick="exportXlsx()">${t('excel')}</button><button class="btn sm" onclick="exportPnl()">${t('export')}</button><button class="btn sm" onclick="window.print()">${t('print')}</button></div></div>
+  <div class="grid kpis" style="margin-bottom:12px">${[[t('revenue'),money(rev)],[t('op_profit'),`<span class="${k.sumBy(k.op)<0?'neg':'pos'}">${money(k.sumBy(k.op))}</span>`],[t('occupancy'),occ.toFixed(1)+'%'],[t('room_nights'),num(st.room_nights)],[t('adr'),money(st.room_nights?room/st.room_nights:0)]].map(x=>`<div class="card kpi"><div class="l">${x[0]}</div><div class="v">${x[1]}</div></div>`).join('')}</div>
+  <div class="card scroll"><table class="t"><thead><tr><th></th>${cols.map(d=>`<th class="right">${t(d)}</th>`).join('')}<th class="right">${t('total')}</th><th class="right">${t('pct')}</th></tr></thead><tbody>
+    ${rows.map(r=>r.type==='sec'?`<tr class="sec"><td colspan="${cols.length+3}">${esc(r.label)}</td></tr>`:`<tr class="${r.type==='line'?'':r.type}"><td>${esc(r.label)}</td>${r.v.map(v=>`<td class="right ${v<0?'neg':''}">${v?num(v):'—'}</td>`).join('')}<td class="right muted">${rev?(r.v[r.v.length-1]/rev*100).toFixed(1)+'%':''}</td></tr>`).join('')}
+  </tbody></table><div class="small muted" style="margin-top:8px">${t('rev_note')} ${t('pbjt')}: ${money(rev*10/110)}.</div></div>
+  <div class="grid two" style="margin-top:12px">
+    <div class="card"><h3>${t('not_profit')}</h3><table class="t"><tbody>${[[t('prive'),-k.prive],[t('modal'),k.modal],[t('kb_given'),-k.kbGiven],[t('kb_repaid'),k.kbRepaid]].map(x=>`<tr><td>${x[0]}</td><td class="right ${x[1]<0?'neg':''}">${x[1]?money(x[1]):'—'}</td></tr>`).join('')}</tbody></table>
+      ${p.kasbon.length?`<h3 style="margin-top:12px">${t('kasbon_open')}</h3><table class="t"><tbody>${p.kasbon.map(x=>`<tr><td>${esc(x.person)}</td><td class="right bold">${money(x.balance)}</td></tr>`).join('')}</tbody></table>`:''}</div>
+    <div class="card"><h3>${t('money_in')}</h3><table class="t"><thead><tr><th>${t('source')}</th><th>${t('method')}</th><th>${t('account')}</th><th class="right">Rp</th></tr></thead><tbody>${p.cash_in.sort((a,b)=>b.amount-a.amount).map(x=>`<tr><td>${x.source.toUpperCase()}</td><td>${esc(x.method)}</td><td>${x.account_id==='unmapped'?`<span class="pill red">${esc(accName(x.account_id))}</span>`:esc(accName(x.account_id))}</td><td class="right">${num(x.amount)}</td></tr>`).join('')||`<tr><td class="muted">—</td></tr>`}
+      <tr class="tot"><td colspan="3">${t('total')}</td><td class="right">${num(p.cash_in.reduce((a,x)=>a+x.amount,0))}</td></tr></tbody></table></div>
+  </div>`;
+}
+function exportPnl(){ const { cols, rows } = pnlRows(); const out=[[`Hash Inn Marina — ${monthLabel(S.month)} (${S.pnl.from} s/d ${S.pnl.to})`],[''].concat(cols.map(d=>t(d))).concat([t('total')])];
+  rows.forEach(r=>out.push(r.type==='sec'?[r.label]:[r.label].concat(r.v))); out.push([]); out.push([t('money_in')]); S.pnl.cash_in.forEach(x=>out.push([x.source,x.method,accName(x.account_id),x.amount]));
+  csvDownload(out, `laporan-${S.month}.csv`); }
+
+const XLSX_LIB = 'https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js';
+function loadScript(src){ return new Promise((res,rej)=>{ if(window.ExcelJS) return res(); const s=document.createElement('script'); s.src=src; s.onload=()=>res(); s.onerror=()=>rej(new Error('load')); document.head.appendChild(s); }); }
+async function exportXlsx(){
+  if(S.busy) return; S.busy=true;
+  try{
+    try{ await loadScript(XLSX_LIB); }catch(e){ toast('Excel → CSV', true); exportPnl(); return; }
+    const p=S.pnl, { k, cols, rows } = pnlRows(), st=p.stats, rev=k.revTotal;
+    const [tx, L] = await Promise.all([ api('bo_list_tx', { p_from:p.from, p_to:p.to }), api('bo_ledgers') ]);
+    const wb = new ExcelJS.Workbook(); wb.creator='Hash Inn Marina Back Office'; wb.created=new Date();
+    const NAVY='FF0B2A4A', SOFT='FFE9F3FB', GRAY='FFEEF1F4', NUM='#,##0;[Red]-#,##0';
+    const head = (ws, r) => { ws.getRow(r).eachCell(c=>{ c.font={ bold:true, color:{ argb:'FFFFFFFF' } }; c.fill={ type:'pattern', pattern:'solid', fgColor:{ argb:NAVY } }; c.alignment={ vertical:'middle' }; }); };
+    // Sheet 1: report
+    const ws = wb.addWorksheet('Laporan', { views:[{ state:'frozen', ySplit:4 }] }); const nc=cols.length+3;
+    ws.mergeCells(1,1,1,nc); ws.getCell(1,1).value=`Hash Inn Marina — ${t('report')} ${monthLabel(S.month)}`; ws.getCell(1,1).font={ bold:true, size:14, color:{ argb:NAVY } };
+    ws.mergeCells(2,1,2,nc); ws.getCell(2,1).value=`${p.from} — ${p.to}`; ws.getCell(2,1).font={ color:{ argb:'FF66768A' } };
+    ws.getRow(4).values=[''].concat(cols.map(d=>t(d))).concat([t('total'), t('pct')]); head(ws,4);
+    let r=5;
+    rows.forEach(x=>{ const row=ws.getRow(r++);
+      if(x.type==='sec'){ row.getCell(1).value=x.label; for(let c=1;c<=nc;c++){ row.getCell(c).fill={ type:'pattern', pattern:'solid', fgColor:{ argb:SOFT } }; row.getCell(c).font={ bold:true, color:{ argb:NAVY } }; } return; }
+      row.getCell(1).value=x.label; x.v.forEach((v,i)=>{ const c=row.getCell(2+i); c.value=v; c.numFmt=NUM; });
+      const pc=row.getCell(nc); pc.value=rev?x.v[x.v.length-1]/rev:0; pc.numFmt='0.0%';
+      if(x.type!=='line') for(let c=1;c<=nc;c++){ const cell=row.getCell(c); cell.font={ bold:true, size:x.type==='big'?12:11 }; cell.border={ top:{ style:'thin', color:{ argb:NAVY } } }; if(x.type==='big') cell.fill={ type:'pattern', pattern:'solid', fgColor:{ argb:GRAY } }; } });
+    r++; const room = p.revenue.filter(x=>x.dept==='hotel'&&x.label==='Kamar').reduce((a,x)=>a+x.amount,0);
+    [[t('room_nights'), st.room_nights, NUM],[t('occupancy'), st.sellable_rooms?st.room_nights/(st.sellable_rooms*st.days):0, '0.0%'],[t('adr'), st.room_nights?Math.round(room/st.room_nights):0, NUM],[t('pbjt'), Math.round(rev*10/110), NUM],
+     [t('prive'), k.prive, NUM],[t('modal'), k.modal, NUM],[t('kb_given'), k.kbGiven, NUM],[t('kb_repaid'), k.kbRepaid, NUM]].forEach(x=>{ const row=ws.getRow(r++); row.getCell(1).value=x[0]; row.getCell(2).value=x[1]; row.getCell(2).numFmt=x[2]; });
+    ws.getColumn(1).width=44; for(let c=2;c<=nc;c++) ws.getColumn(c).width=18;
+    // Sheet 2: transactions
+    const cat=id=>{ const c=S.boot.categories.find(z=>z.id===id); return c?catName(c):''; };
+    const w2 = wb.addWorksheet('Transaksi', { views:[{ state:'frozen', ySplit:1 }] });
+    w2.columns=[[t('date'),12],['Arah',10],[t('dept'),11],[t('category'),28],[t('supplier'),22],[t('desc'),36],[t('qty'),9],[t('unit'),9],[t('unit_price'),14],[t('amount'),16],[t('account'),22],[t('to_acc'),22],[t('name'),18],[t('ref'),14],[t('due'),12],[t('by'),14],[t('void'),10],[t('reason'),24]].map(c=>({ header:c[0], width:c[1] }));
+    tx.slice().reverse().forEach(x=>{ const row=w2.addRow([x.tx_date, x.direction, x.direction==='transfer'?'':t(x.dept), x.direction==='transfer'?t('m_tr'):cat(x.category_id), x.supplier, x.description, x.qty==null?null:Number(x.qty), x.unit, x.unit_price==null?null:Number(x.unit_price),
+      x.direction==='out'?-x.amount:x.amount, accName(x.account_id), x.to_account_id?accName(x.to_account_id):'', x.person, x.ref_no, x.due_date||'', x.created_by, x.voided?'✓':'', x.void_reason||'']);
+      row.getCell(9).numFmt=NUM; row.getCell(10).numFmt=NUM; if(x.voided) row.eachCell(c=>{ c.font={ strike:true, color:{ argb:'FF999999' } }; }); });
+    head(w2,1); w2.autoFilter={ from:{ row:1, column:1 }, to:{ row:1, column:18 } };
+    // Sheet 3: money received
+    const w3 = wb.addWorksheet('Uang Masuk'); w3.columns=[[t('source'),12],[t('method'),20],[t('account'),26],['Rp',18]].map(c=>({ header:c[0], width:c[1] }));
+    p.cash_in.slice().sort((a,b)=>b.amount-a.amount).forEach(x=>{ w3.addRow([x.source.toUpperCase(), x.method, accName(x.account_id), x.amount]).getCell(4).numFmt=NUM; });
+    const tr=w3.addRow([t('total'),'','',p.cash_in.reduce((a,x)=>a+x.amount,0)]); tr.font={ bold:true }; tr.getCell(4).numFmt=NUM; head(w3,1);
+    // Sheet 4: payables & receivables
+    const w4 = wb.addWorksheet('Hutang Piutang'); w4.columns=[['',20],[t('name'),26],[t('total'),16],[t('paid_l'),16],[t('balance'),16],[t('since'),12],[t('due'),12]].map(c=>({ header:c[0], width:c[1] }));
+    [['piutang_s',L.piutang],['hutang_s',L.hutang],['kasbon_l',L.kasbon],['antar_s',L.antar_usaha||[]]].forEach(g=>g[1].forEach(x=>{ const row=w4.addRow([t(g[0]), x.name, x.total, x.paid, x.balance, x.oldest, x.first_due||'']); [3,4,5].forEach(c=>row.getCell(c).numFmt=NUM); })); head(w4,1);
+    const buf = await wb.xlsx.writeBuffer();
+    const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([buf], { type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })); a.download=`Hash-Inn-Marina-${S.month}.xlsx`; document.body.appendChild(a); a.click(); a.remove();
+  }catch(e){ fail(e); } finally{ S.busy=false; }
+}
+
+/* ---------- SETTINGS (owner) ---------- */
+function vSettings(){
+  const b=S.boot, st=b.settings, accs=b.accounts.filter(a=>a.type==='cash'||a.type==='bank');
+  const methods=[...new Set((b.pos_methods||[]).concat(Object.keys(st.method_map||{})))].sort();
+  const secs={revenue:t('s_revenue'),cogs:t('s_cogs'),opex:t('s_opex'),payroll:t('s_payroll'),nonop:t('s_nonop'),owner:t('prive'),advance:t('m_kb')};
+  return `<h2>${t('settings')}</h2><div class="grid two">
+  <div class="card"><div class="spread"><h3 style="margin:0">${t('users')}</h3><button class="btn sm primary" onclick="editUser()">＋ ${t('add_user')}</button></div>
+    <table class="t" style="margin-top:6px"><tbody>${b.users.map(u=>`<tr><td>${esc(u.name)}</td><td><span class="pill ${u.role==='owner'?'blue':'gray'}">${u.role}</span> ${u.active?'':`<span class="pill red">off</span>`}</td><td class="right"><button class="btn sm" onclick="editUser('${u.id}')">${t('edit')}</button></td></tr>`).join('')||`<tr><td class="muted">${t('none')}</td></tr>`}</tbody></table></div>
+  <div class="card"><h3>${t('general')}</h3><label class="f" for="sStart">${t('start_date')}</label><input id="sStart" type="date" value="${st.start_date}">
+    <label class="f" for="sLock">${t('lock_days')}</label><input id="sLock" type="number" value="${st.lock_days}">
+    <h3 style="margin-top:14px">${t('mapping')}</h3>${methods.map((m,i)=>`<div class="row" style="margin-bottom:6px"><span style="flex:1">${esc(m)}</span><select id="map_${i}" data-m="${esc(m)}" style="flex:1"><option value="">${esc(accName('unmapped'))}</option>${accs.filter(a=>a.type==='bank').map(a=>`<option value="${a.id}" ${(st.method_map||{})[m]===a.id?'selected':''}>${esc(a.name)}</option>`).join('')}</select></div>`).join('')||`<div class="muted">${t('none')}</div>`}
+    <button class="btn primary" style="margin-top:10px" onclick="saveSettings(${methods.length})">${t('save')}</button></div>
+  <div class="card"><div class="spread"><h3 style="margin:0">${t('accounts')}</h3><button class="btn sm primary" onclick="editAccount()">＋ ${t('add_account')}</button></div>
+    <table class="t" style="margin-top:6px"><thead><tr><th>${t('name')}</th><th class="right">${t('opening_bal')}</th><th></th></tr></thead><tbody>${accs.map(a=>`<tr><td>${esc(a.name)} ${a.active?'':`<span class="pill red">off</span>`}</td><td class="right">${num(a.opening_balance)}</td><td class="right"><button class="btn sm" onclick="editAccount('${a.id}')">${t('edit')}</button></td></tr>`).join('')}</tbody></table></div>
+  <div class="card"><div class="spread"><h3 style="margin:0">${t('categories')}</h3><button class="btn sm primary" onclick="editCategory()">＋ ${t('add_category')}</button></div>
+    <div style="max-height:420px;overflow:auto;margin-top:6px"><table class="t"><tbody>${b.categories.map(c=>`<tr><td>${esc(c.name_id)}<div class="small muted">${esc(c.name_en)}</div></td><td class="small">${esc(secs[c.section])} ${c.active?'':`<span class="pill red">off</span>`}</td><td class="right"><button class="btn sm" onclick="editCategory('${c.id}')">${t('edit')}</button></td></tr>`).join('')}</tbody></table></div></div>
+  </div>`;
+}
+async function adminSave(kind, p){ try{ await api('bo_admin_save', { p_kind:kind, p }); await reboot(); S.home=null; S.cash=null; render(); toast(t('saved')); }catch(e){ fail(e); } }
+async function editUser(id){ const u=id?S.boot.users.find(x=>x.id===id):null;
+  const r = await ask({ title:u?u.name:t('add_user'), ok:t('save'), fields:(u?[]:[{ id:'name', label:t('name'), value:'' }]).concat([{ id:'pin', label:u?t('new_pin'):t('pin'), type:'password', value:'' }, { id:'role', label:t('role'), type:'select', value:u?u.role:'admin', options:[['admin','admin'],['owner','owner']] }]).concat(u?[{ id:'active', label:t('active'), type:'checkbox', value:u.active }]:[]) });
+  if(!r) return; if(!u && (!r.name || r.pin.length<4)){ toast(t('pin')+' ≥ 4', true); return; }
+  await adminSave('user', u?{ id:u.id, pin:r.pin, role:r.role, active:r.active }:{ name:r.name, pin:r.pin, role:r.role }); }
+async function editAccount(id){ const a=id?S.boot.accounts.find(x=>x.id===id):{ name:'', opening_balance:0, type:'bank', active:true };
+  const r = await ask({ title:id?a.name:t('add_account'), ok:t('save'), fields:[{ id:'name', label:t('name'), value:a.name }, { id:'opening_balance', label:t('opening_bal'), type:'number', value:a.opening_balance }].concat(id?[{ id:'active', label:t('active'), type:'checkbox', value:a.active }]:[{ id:'type', label:'Type', type:'select', value:'bank', options:[['bank','bank'],['cash','cash']] }]) });
+  if(!r || !r.name) return; await adminSave('account', { id:id||'', name:r.name, opening_balance:r.opening_balance, type:id?a.type:r.type, active:id?r.active:true }); }
+async function editCategory(id){ const c=id?S.boot.categories.find(x=>x.id===id):{ name_id:'', name_en:'', section:'opex', active:true };
+  const r = await ask({ title:id?c.name_id:t('add_category'), ok:t('save'), fields:[{ id:'name_id', label:t('name_id'), value:c.name_id }, { id:'name_en', label:t('name_en'), value:c.name_en }].concat(id?[{ id:'active', label:t('active'), type:'checkbox', value:c.active }]:[{ id:'section', label:t('section'), type:'select', value:'opex', options:[['revenue',t('s_revenue')],['cogs',t('s_cogs')],['opex',t('s_opex')],['payroll',t('s_payroll')],['nonop',t('s_nonop')]] }]) });
+  if(!r || !r.name_id) return; await adminSave('category', { id:id||'', name_id:r.name_id, name_en:r.name_en, section:id?c.section:r.section, active:id?r.active:true }); }
+async function saveSettings(n){ const map={}; for(let i=0;i<n;i++){ const el=document.getElementById('map_'+i); if(el.value) map[el.dataset.m]=el.value; }
+  await adminSave('settings', { start_date:document.getElementById('sStart').value, lock_days:parseInt(document.getElementById('sLock').value)||0, method_map:map }); }
+
+/* ---------- PAYROLL ---------- */
+const PR_MONEY = ['basic','fixed_allowance','overtime','incentive','transport','bonus_attendance','bonus_other','late_amount','kasbon','piutang'];
+const PR_DAYS = ['days_alpa','days_ijin','days_sakit'];
+const prDefaultPeriod = () => { const d=today(); return d.slice(0,7); };
+const lastDay = m => monthRange(m)[1];
+function prSettings(){ const r=S.pr&&S.pr.run; return (r && r.status==='posted' && r.settings && r.settings.divisor) ? r.settings : (S.pr?S.pr.settings:{ divisor:26 }); }
+function prCalc(l, st){
+  const dv=Math.max(Number(st.divisor)||26,1), rate=Math.round((+l.basic||0)/dv);
+  const days=(+l.days_alpa||0)+(st.deduct_ijin?(+l.days_ijin||0):0)+(st.deduct_sakit?(+l.days_sakit||0):0);
+  const absence=Math.round(rate*days);
+  const gross=['basic','fixed_allowance','overtime','incentive','transport','bonus_attendance','bonus_other'].reduce((a,k)=>a+(+l[k]||0),0);
+  const earned=gross-absence-(+l.late_amount||0), thp=earned-(+l.kasbon||0)-(+l.piutang||0);
+  return { rate, days, absence, gross, earned, thp, pct: earned>0 ? (+l.kasbon||0)/earned : 0 };
+}
+const prBal = name => { const k=String(name||'').trim().toLowerCase(); return ((S.pr&&S.pr.balances)||[]).find(b=>b.k===k)||{ kasbon:0, piutang:0 }; };
+const prEditable = () => S.pr && (!S.pr.run || S.pr.run.status==='draft');
+const prHistoric = () => S.prPayDate && S.pr && S.prPayDate < S.pr.start_date;
+function personList(){ return [...new Set((S.boot.persons||[]).concat((S.boot.employees||[]).map(e=>e.name)))].sort(); }
+
+async function loadPayroll(){
+  S.pr = await api('bo_payroll_data', { p_period:S.prPeriod });
+  const r=S.pr.run; S.prDirty=false;
+  S.prLines = r ? r.lines.map(l=>Object.assign({}, l)) : null;
+  S.prPayDate = r && r.pay_date ? r.pay_date : lastDay(S.prPeriod);
+  S.prNote = r ? (r.note||'') : '';
+}
+function prShiftMonth(n){ if(S.prDirty && !confirm(t('pr_unsaved'))) return; const [y,m]=S.prPeriod.split('-').map(Number); const d=new Date(Date.UTC(y,m-1+n,1)); S.prPeriod=d.toISOString().slice(0,7); go('payroll'); }
+function prNew(){
+  S.prLines = S.pr.employees.filter(e=>e.active).map(e=>{ const b=prBal(e.name); return { employee_id:e.id, name:e.name, dept:e.dept, position:e.position, basic:e.basic_salary, fixed_allowance:e.fixed_allowance,
+    overtime:0, incentive:0, transport:0, bonus_attendance:0, bonus_other:0, days_alpa:0, days_ijin:0, days_sakit:0, late_amount:0, kasbon:Math.max(b.kasbon,0), piutang:Math.max(b.piutang,0), pay_account:e.pay_account, note:'' }; });
+  S.prDirty=true; render();
+}
+function prSet(i, k, v){
+  const l=S.prLines[i]; if(!l) return;
+  l[k] = PR_MONEY.includes(k) ? (parseInt(String(v).replace(/[^\d]/g,''))||0) : PR_DAYS.includes(k) ? (parseFloat(String(v).replace(',','.'))||0) : v;
+  S.prDirty=true; prRefresh(i);
+}
+function prRefresh(i){
+  const st=prSettings(), l=S.prLines[i], c=prCalc(l, st), lim=Number(st.kasbon_limit)||0;
+  const set=(id,h,cls)=>{ const el=document.getElementById(id); if(el){ el.innerHTML=h; if(cls!==undefined) el.className=cls; } };
+  set('pr_abs_'+i, c.absence?num(c.absence):'—', 'right');
+  set('pr_earn_'+i, num(c.earned), 'right');
+  set('pr_thp_'+i, money(c.thp), 'right bold '+(c.thp<0?'neg':''));
+  set('pr_pct_'+i, c.pct?Math.round(c.pct*100)+'%':'—', 'right '+(lim && c.pct>lim?'neg bold':'muted'));
+  set('prSummary', prSummaryHtml()); set('prChecks', prChecksHtml()); set('prTotRow', prTotRowHtml());
+}
+function prTotals(){
+  const st=prSettings(), T_={ gross:0, absence:0, late:0, earned:0, kasbon:0, piutang:0, thp:0, n:0 }, byAcc={}, byDept={};
+  (S.prLines||[]).forEach(l=>{ const c=prCalc(l, st); T_.gross+=c.gross; T_.absence+=c.absence; T_.late+=(+l.late_amount||0); T_.earned+=c.earned; T_.kasbon+=(+l.kasbon||0); T_.piutang+=(+l.piutang||0); T_.thp+=c.thp; T_.n++;
+    byAcc[l.pay_account]=(byAcc[l.pay_account]||0)+c.thp; const d=byDept[l.dept]||(byDept[l.dept]={ n:0, earned:0, thp:0 }); d.n++; d.earned+=c.earned; d.thp+=c.thp; });
+  return { T_, byAcc, byDept };
+}
+function prSummaryHtml(){
+  const { T_, byAcc, byDept } = prTotals();
+  return `<div class="grid kpis" style="margin-bottom:10px">${[[t('pr_staff'), T_.n, ''],[t('pr_cost'), money(T_.earned), t('pr_cost_d')],[t('pr_kasbon_cut'), money(T_.kasbon+T_.piutang), `${t('m_kb')} ${num(T_.kasbon)} · ${t('pr_piutang_s')} ${num(T_.piutang)}`],[t('pr_to_pay'), money(T_.thp), Object.entries(byAcc).map(([a,v])=>`${esc(accName(a))} ${num(v)}`).join(' · ')]]
+    .map(x=>`<div class="card kpi"><div class="l">${x[0]}</div><div class="v">${x[1]}</div><div class="s">${x[2]}</div></div>`).join('')}</div>
+    <div class="small muted" style="margin-bottom:8px">${Object.entries(byDept).map(([d,v])=>`<b>${t(d)}</b>: ${v.n} ${t('pr_people')} · ${t('pr_cost')} ${money(v.earned)} · ${t('pr_to_pay')} ${money(v.thp)}`).join(' &nbsp;|&nbsp; ')}</div>`;
+}
+function prChecks(){
+  const st=prSettings(), lim=Number(st.kasbon_limit)||0, out=[], hist=prHistoric(), posted=S.pr.run&&S.pr.run.status==='posted';
+  (S.prLines||[]).forEach(l=>{ const c=prCalc(l, st), b=prBal(l.name);
+    if(c.thp<0) out.push(['red', `<b>${esc(l.name)}</b>: ${t('pr_ck_neg')} (${money(c.thp)})`]);
+    if(lim && c.pct>lim) out.push(['amber', `<b>${esc(l.name)}</b>: ${t('pr_ck_limit')} ${Math.round(c.pct*100)}% (${t('pr_limit')} ${Math.round(lim*100)}%)`]);
+    if(!hist && !posted){
+      if((+l.kasbon||0) > Math.max(b.kasbon,0)) out.push(['amber', `<b>${esc(l.name)}</b>: ${t('pr_ck_kb_over')} ${money(Math.max(b.kasbon,0))}`]);
+      if(b.kasbon>0 && (+l.kasbon||0) < b.kasbon) out.push(['blue', `<b>${esc(l.name)}</b>: ${t('pr_ck_kb_left')} ${money(b.kasbon-(+l.kasbon||0))}`]);
+      if((+l.piutang||0) > Math.max(b.piutang,0)) out.push(['blue', `<b>${esc(l.name)}</b>: ${money((+l.piutang||0)-Math.max(b.piutang,0))} ${t('pr_ck_pt_other')}`]);
+    }
+    if(!(+l.basic)) out.push(['amber', `<b>${esc(l.name)}</b>: ${t('pr_ck_nobasic')}`]);
+  });
+  if(!posted){ const inRun=new Set((S.prLines||[]).map(l=>l.name.trim().toLowerCase()));
+    S.pr.employees.filter(e=>e.active && !inRun.has(e.name.trim().toLowerCase())).forEach(e=>out.push(['blue', `<b>${esc(e.name)}</b>: ${t('pr_ck_missing')}`])); }
+  if(hist && !posted) out.push(['blue', t('pr_ck_hist')]);
+  return out;
+}
+function prChecksHtml(){ const c=prChecks(); if(!c.length) return `<span class="pill green">✓ ${t('pr_ck_ok')}</span>`;
+  return c.map(x=>`<div class="row small" style="margin:3px 0;flex-wrap:nowrap;align-items:flex-start"><span class="pill ${x[0]}">${x[0]==='red'?'!':x[0]==='amber'?'⚠':'i'}</span><span>${x[1]}</span></div>`).join(''); }
+function prTotRowHtml(){ const { T_ } = prTotals(); const st=prSettings(); const s=k=>(S.prLines||[]).reduce((a,l)=>a+(+l[k]||0),0);
+  return `<td></td><td class="bold">${t('total')}</td>${['basic','fixed_allowance','overtime','incentive','transport','bonus_attendance','bonus_other'].map(k=>`<td class="right">${num(s(k))}</td>`).join('')}
+    <td class="right">${s('days_alpa')||''}</td><td class="right">${s('days_ijin')||''}</td><td class="right">${s('days_sakit')||''}</td><td class="right">${num(T_.absence)}</td><td class="right">${num(s('late_amount'))}</td><td class="right">${num(T_.earned)}</td>
+    <td class="right">${num(T_.kasbon)}</td><td class="right">${num(T_.piutang)}</td><td class="right bold">${money(T_.thp)}</td><td class="right muted">${T_.earned?Math.round(T_.kasbon/T_.earned*100)+'%':''}</td><td colspan="2"></td>`; }
+
+function vPayroll(){
+  if(!S.pr) return `<div class="card muted">…</div>`;
+  const owner=S.user.role==='owner', view=S.prView||'run';
+  const head=`<div class="spread" style="margin-bottom:10px"><h2 style="margin:0">${t('payroll')}</h2>
+    <div class="chips noprint">${[['run','pr_v_run'],['staff','pr_v_staff'],['hist','pr_v_hist']].map(v=>`<button class="${view===v[0]?'active':''}" onclick="S.prView='${v[0]}';render()">${t(v[1])}</button>`).join('')}</div></div>`;
+  if(view==='staff') return head+vPrStaff(owner);
+  if(view==='hist') return head+vPrHist();
+  const r=S.pr.run, ed=prEditable(), posted=r&&r.status==='posted';
+  const bar=`<div class="spread noprint" style="margin-bottom:10px"><div class="row"><button class="btn sm" onclick="prShiftMonth(-1)">${t('prev')}</button><b style="font-size:16px;color:var(--navy)">${monthLabel(S.prPeriod)}</b><button class="btn sm" onclick="prShiftMonth(1)">${t('next')}</button>
+      ${r?`<span class="pill ${posted?'green':'amber'}">${posted?(r.record_only?t('pr_st_record'):t('pr_st_posted')):t('pr_st_draft')}</span>`:''}${S.prDirty?`<span class="pill red">${t('pr_unsaved_s')}</span>`:''}</div>
+    <div class="row">${S.prLines?`<button class="btn sm" onclick="prPrint()">${t('pr_slips')}</button><button class="btn sm" onclick="prExport()">${t('excel')}</button>`:''}
+      ${ed&&S.prLines?`<button class="btn sm" onclick="prRefill()">${t('pr_refill')}</button><button class="btn sm primary" onclick="prSave()">${t('pr_save')}</button>${owner?`<button class="btn sm green" onclick="prPost()">${t('pr_post')}</button>`:''}`:''}
+      ${posted&&owner?`<button class="btn sm danger" onclick="prUnpost()">${t('pr_unpost')}</button>`:''}${ed&&r&&owner?`<button class="btn sm danger" onclick="prDelete()">${t('pr_delete')}</button>`:''}</div></div>`;
+  if(!S.prLines) return head+bar+`<div class="card"><p>${t('pr_none')} <b>${monthLabel(S.prPeriod)}</b>.</p>
+      ${S.pr.employees.filter(e=>e.active).length?`<button class="btn primary" onclick="prNew()">${t('pr_create')} (${S.pr.employees.filter(e=>e.active).length} ${t('pr_people')})</button>`:`<p class="muted">${t('pr_no_staff')}</p><button class="btn" onclick="S.prView='staff';render()">${t('pr_v_staff')}</button>`}</div>`;
+  const st=prSettings(), lim=Number(st.kasbon_limit)||0, dis=ed?'':'disabled';
+  const accs=S.boot.accounts.filter(a=>a.active && (a.type==='cash'||a.type==='bank'));
+  const inp=(i,k,v,w)=>`<input aria-label="${t('pr_c_'+k)}" ${dis} value="${v?(PR_DAYS.includes(k)?v:num(v)):''}" inputmode="${PR_DAYS.includes(k)?'decimal':'numeric'}" style="width:${w||92}px;padding:5px 6px;font-size:13px;text-align:right" oninput="prSet(${i},'${k}',this.value)">`;
+  const depts=[...new Set(S.prLines.map(l=>l.dept))];
+  const rows=depts.map(d=>`<tr class="sec"><td colspan="21">${t(d)}</td></tr>`+S.prLines.map((l,i)=>{ if(l.dept!==d) return ''; const c=prCalc(l, st);
+    return `<tr><td class="noprint">${ed?`<button class="btn sm" aria-label="${t('pr_remove')}" title="${t('pr_remove')}" onclick="prRemove(${i})">×</button>`:''}</td>
+      <td style="white-space:nowrap"><b>${esc(l.name)}</b>${l.position?`<div class="small muted">${esc(l.position)}</div>`:''}</td>
+      ${['basic','fixed_allowance','overtime','incentive','transport','bonus_attendance','bonus_other'].map(k=>`<td>${inp(i,k,l[k])}</td>`).join('')}
+      ${PR_DAYS.map(k=>`<td>${inp(i,k,l[k],52)}</td>`).join('')}
+      <td id="pr_abs_${i}" class="right">${c.absence?num(c.absence):'—'}</td><td>${inp(i,'late_amount',l.late_amount,80)}</td><td id="pr_earn_${i}" class="right">${num(c.earned)}</td>
+      <td>${inp(i,'kasbon',l.kasbon)}${prBal(l.name).kasbon&&ed?`<div class="small muted right">${t('pr_rec')} ${num(prBal(l.name).kasbon)}</div>`:''}</td>
+      <td>${inp(i,'piutang',l.piutang,84)}${prBal(l.name).piutang&&ed?`<div class="small muted right">${t('pr_rec')} ${num(prBal(l.name).piutang)}</div>`:''}</td>
+      <td id="pr_thp_${i}" class="right bold ${c.thp<0?'neg':''}">${money(c.thp)}</td><td id="pr_pct_${i}" class="right ${lim&&c.pct>lim?'neg bold':'muted'}">${c.pct?Math.round(c.pct*100)+'%':'—'}</td>
+      <td><select ${dis} aria-label="${t('pr_c_pay_account')}" style="width:130px;padding:5px;font-size:13px" onchange="prSet(${i},'pay_account',this.value)">${accs.map(a=>`<option value="${a.id}" ${a.id===l.pay_account?'selected':''}>${esc(a.name)}</option>`).join('')}</select></td>
+      <td><input ${dis} aria-label="${t('note')}" value="${esc(l.note||'')}" style="width:200px;padding:5px 6px;font-size:13px" oninput="prSet(${i},'note',this.value)"></td></tr>`; }).join('')).join('');
+  const notIn=S.pr.employees.filter(e=>e.active && !S.prLines.some(l=>l.name.trim().toLowerCase()===e.name.trim().toLowerCase()));
+  return head+bar+`<div id="prSummary">${prSummaryHtml()}</div>
+    <div class="grid two" style="margin-bottom:10px"><div class="card"><h3>${t('pr_checks')}</h3><div id="prChecks">${prChecksHtml()}</div></div>
+      <div class="card"><div class="formgrid"><div><label class="f" for="prPay">${t('pr_paydate')}</label><input id="prPay" type="date" ${dis} value="${S.prPayDate||''}" onchange="S.prPayDate=this.value;S.prDirty=true;render()"></div>
+        <div><label class="f">${t('pr_rules')}</label><div class="small">${t('pr_divisor')} ${st.divisor} · ${t('pr_ijin')} ${st.deduct_ijin?t('pr_cut'):t('pr_nocut')} · ${t('pr_sakit')} ${st.deduct_sakit?t('pr_cut'):t('pr_nocut')} · ${t('pr_limit')} ${Math.round((st.kasbon_limit||0)*100)}%</div></div></div>
+        <label class="f" for="prNote">${t('note')}</label><input id="prNote" ${dis} value="${esc(S.prNote||'')}" oninput="S.prNote=this.value;S.prDirty=true">
+        ${ed&&notIn.length?`<div class="row" style="margin-top:8px"><select id="prAddSel" style="max-width:240px">${notIn.map(e=>`<option value="${e.id}">${esc(e.name)}</option>`).join('')}</select><button class="btn sm" onclick="prAdd()">＋ ${t('pr_add')}</button></div>`:''}
+        ${posted?`<div class="small muted" style="margin-top:8px">${t('pr_posted_by')} ${esc(r.posted_by||'')} · ${r.pay_date}${r.record_only?' · '+t('pr_record_note'):` · ${(r.tx||[]).length} ${t('pr_entries')}`}</div>`:''}</div></div>
+    <div class="card scroll"><table class="t pr"><thead><tr><th class="noprint"></th><th>${t('name')}</th>${['basic','fixed_allowance','overtime','incentive','transport','bonus_attendance','bonus_other','days_alpa','days_ijin','days_sakit'].map(k=>`<th class="right">${t('pr_c_'+k)}</th>`).join('')}
+      <th class="right">${t('pr_c_absence')}</th><th class="right">${t('pr_c_late_amount')}</th><th class="right">${t('pr_c_earned')}</th><th class="right">${t('pr_c_kasbon')}</th><th class="right">${t('pr_c_piutang')}</th><th class="right">${t('pr_c_thp')}</th><th class="right">${t('pr_c_pct')}</th><th>${t('pr_c_pay_account')}</th><th>${t('note')}</th></tr></thead>
+      <tbody>${rows}<tr class="tot" id="prTotRow">${prTotRowHtml()}</tr></tbody></table></div>
+    <div class="small muted" style="margin-top:8px">${t('pr_help')}</div>`;
+}
+function prRemove(i){ S.prLines.splice(i,1); S.prDirty=true; render(); }
+function prAdd(){ const id=document.getElementById('prAddSel').value, e=S.pr.employees.find(x=>x.id===id); if(!e) return; const b=prBal(e.name);
+  S.prLines.push({ employee_id:e.id, name:e.name, dept:e.dept, position:e.position, basic:e.basic_salary, fixed_allowance:e.fixed_allowance, overtime:0, incentive:0, transport:0, bonus_attendance:0, bonus_other:0, days_alpa:0, days_ijin:0, days_sakit:0, late_amount:0, kasbon:Math.max(b.kasbon,0), piutang:Math.max(b.piutang,0), pay_account:e.pay_account, note:'' });
+  S.prDirty=true; render(); }
+function prRefill(){ S.prLines.forEach(l=>{ const b=prBal(l.name); l.kasbon=Math.max(b.kasbon,0); l.piutang=Math.max(b.piutang,0); }); S.prDirty=true; render(); toast(t('pr_refilled')); }
+async function prSave(silent){
+  if(S.busy) return false; S.busy=true;
+  try{ await api('bo_payroll_save', { p:{ period:S.prPeriod, pay_date:S.prPayDate||'', note:S.prNote||'', lines:S.prLines } }); await loadPayroll(); if(!silent){ render(); toast(t('saved')); } return true; }
+  catch(e){ fail(e); return false; } finally{ S.busy=false; }
+}
+async function prPost(){
+  const st=prSettings(); if(prChecks().some(c=>c[0]==='red')){ toast(t('pr_ck_neg'), true); return; }
+  const { T_, byAcc } = prTotals(); const hist=prHistoric();
+  const r = await ask({ title:`${t('pr_post')} · ${monthLabel(S.prPeriod)}`, ok:t('pr_post'),
+    html:`<p>${hist?t('pr_post_hist'):t('pr_post_d')}</p><table class="t"><tbody>${Object.entries(byAcc).map(([a,v])=>`<tr><td>${esc(accName(a))}</td><td class="right bold">${money(v)}</td></tr>`).join('')}<tr class="tot"><td>${t('pr_to_pay')}</td><td class="right">${money(T_.thp)}</td></tr></tbody></table>`,
+    fields:[{ id:'date', label:t('pr_paydate'), type:'date', value:(S.prPayDate && S.prPayDate<=today()) ? S.prPayDate : today() }] });
+  if(!r) return; S.prPayDate=r.date;
+  if(!(await prSave(true))) return;
+  try{ const res = await api('bo_payroll_post', { p_id:S.pr.run.id, p_pay_date:r.date }); await loadPayroll(); S.home=null; S.ledger=null; S.cash=null; render();
+    toast(res.record_only ? t('pr_st_record') : `${t('pr_st_posted')} · ${res.entries} ${t('pr_entries')}`); }catch(e){ fail(e); await loadPayroll(); render(); }
+}
+async function prUnpost(){
+  const r = await ask({ title:t('pr_unpost'), html:`<p class="small">${t('pr_unpost_d')}</p>`, fields:[{ id:'reason', label:t('reason'), value:'' }] }); if(!r) return; if(!r.reason){ toast(t('reason')+'?', true); return; }
+  try{ await api('bo_payroll_unpost', { p_id:S.pr.run.id, p_reason:r.reason }); await loadPayroll(); S.home=null; S.ledger=null; S.cash=null; render(); toast(t('saved')); }catch(e){ fail(e); }
+}
+async function prDelete(){ if(!confirm(t('pr_delete')+' '+monthLabel(S.prPeriod)+'?')) return;
+  try{ await api('bo_payroll_delete', { p_id:S.pr.run.id }); await loadPayroll(); render(); toast(t('saved')); }catch(e){ fail(e); } }
+
+function vPrStaff(owner){
+  const st=S.pr.settings, emps=S.pr.employees;
+  return `<div class="grid two"><div class="card" style="grid-column:1/-1"><div class="spread"><h3 style="margin:0">${t('pr_v_staff')} (${emps.filter(e=>e.active).length})</h3>${owner?`<button class="btn sm primary" onclick="prEditEmp()">＋ ${t('pr_add_emp')}</button>`:''}</div>
+    <div class="scroll"><table class="t" style="margin-top:6px"><thead><tr><th>${t('name')}</th><th>${t('dept')}</th><th>${t('pr_position')}</th><th class="right">${t('pr_c_basic')}</th><th class="right">${t('pr_c_fixed_allowance')}</th><th>${t('pr_c_pay_account')}</th><th></th></tr></thead><tbody>
+    ${emps.map(e=>`<tr class="${e.active?'':'voided'}"><td><b>${esc(e.name)}</b></td><td>${t(e.dept)}</td><td>${esc(e.position)}</td><td class="right">${num(e.basic_salary)}</td><td class="right">${num(e.fixed_allowance)}</td><td>${esc(accName(e.pay_account))}</td>
+      <td class="right">${owner?`<button class="btn sm" onclick="prEditEmp('${e.id}')">${t('edit')}</button>`:''}</td></tr>`).join('')||`<tr><td class="muted">${t('none')}</td></tr>`}</tbody></table></div>
+    ${owner?'':`<div class="small muted" style="margin-top:6px">${t('owner_only')}</div>`}</div>
+    <div class="card"><h3>${t('pr_rules')}</h3>
+      <label class="f" for="psDiv">${t('pr_divisor_l')}</label><input id="psDiv" type="number" ${owner?'':'disabled'} value="${st.divisor}">
+      <label class="row small" style="margin-top:10px"><input type="checkbox" id="psIjin" style="width:auto" ${st.deduct_ijin?'checked':''} ${owner?'':'disabled'}> ${t('pr_ijin_l')}</label>
+      <label class="row small" style="margin-top:6px"><input type="checkbox" id="psSakit" style="width:auto" ${st.deduct_sakit?'checked':''} ${owner?'':'disabled'}> ${t('pr_sakit_l')}</label>
+      <label class="f" for="psLim">${t('pr_limit_l')}</label><input id="psLim" type="number" ${owner?'':'disabled'} value="${Math.round((st.kasbon_limit||0)*100)}">
+      ${owner?`<button class="btn primary" style="margin-top:12px" onclick="prSaveSettings()">${t('save')}</button>`:''}</div>
+    <div class="card"><h3>${t('pr_how')}</h3><ol class="small" style="padding-left:18px;margin:0;line-height:1.6">${t('pr_how_steps')}</ol></div></div>`;
+}
+async function prEditEmp(id){
+  const e=id?S.pr.employees.find(x=>x.id===id):{ name:'', dept:'hotel', position:'', basic_salary:0, fixed_allowance:0, pay_account:'kas_hotel', active:true };
+  const accs=S.boot.accounts.filter(a=>a.active && (a.type==='cash'||a.type==='bank'));
+  const r = await ask({ title:id?e.name:t('pr_add_emp'), ok:t('save'), fields:[{ id:'name', label:t('name'), value:e.name }, { id:'dept', label:t('dept'), type:'select', value:e.dept, options:DEPTS.map(d=>[d,t(d)]) },
+    { id:'position', label:t('pr_position'), value:e.position }, { id:'basic_salary', label:t('pr_c_basic'), type:'number', value:e.basic_salary }, { id:'fixed_allowance', label:t('pr_c_fixed_allowance'), type:'number', value:e.fixed_allowance },
+    { id:'pay_account', label:t('pr_c_pay_account'), type:'select', value:e.pay_account, options:accs.map(a=>[a.id,a.name]) }].concat(id?[{ id:'active', label:t('active'), type:'checkbox', value:e.active }]:[]) });
+  if(!r || !r.name) return;
+  try{ await api('bo_employee_save', { p:Object.assign({ id:id||'' }, r, id?{}:{ active:true }) }); await Promise.all([loadPayroll(), reboot()]); render(); toast(t('saved')); }catch(err){ fail(err); }
+}
+async function prSaveSettings(){
+  const p={ divisor:parseFloat(document.getElementById('psDiv').value)||26, deduct_ijin:document.getElementById('psIjin').checked, deduct_sakit:document.getElementById('psSakit').checked, kasbon_limit:(parseFloat(document.getElementById('psLim').value)||0)/100 };
+  try{ await api('bo_payroll_settings_save', { p }); await loadPayroll(); render(); toast(t('saved')); }catch(e){ fail(e); }
+}
+function vPrHist(){
+  const runs=S.pr.runs;
+  return `<div class="card scroll"><table class="t"><thead><tr><th>${t('pr_period')}</th><th>Status</th><th>${t('pr_paydate')}</th><th class="right">${t('pr_staff')}</th><th class="right">${t('pr_to_pay')}</th><th></th></tr></thead><tbody>
+    ${runs.map(r=>`<tr><td><b>${monthLabel(r.period)}</b></td><td><span class="pill ${r.status==='posted'?'green':'amber'}">${r.status==='posted'?(r.record_only?t('pr_st_record'):t('pr_st_posted')):t('pr_st_draft')}</span></td><td>${r.pay_date||'—'}</td><td class="right">${r.n}</td><td class="right bold">${money(r.thp)}</td>
+      <td class="right"><button class="btn sm" onclick="S.prPeriod='${r.period}';S.prView='run';go('payroll')">${t('pr_open')}</button></td></tr>`).join('')||`<tr><td class="muted">${t('none')}</td></tr>`}</tbody></table></div>`;
+}
+
+function prSlipHtml(l, st){
+  const c=prCalc(l, st), row=(a,b,cls)=>`<tr><td>${a}</td><td class="right ${cls||''}">${b}</td></tr>`, paid=S.prPayDate||lastDay(S.prPeriod);
+  const pdate=new Date(paid+'T00:00:00Z').toLocaleDateString('id-ID',{ day:'numeric', month:'long', year:'numeric', timeZone:'UTC' });
+  const earn=[['Gaji pokok',l.basic],['Tunjangan tetap',l.fixed_allowance],['Lembur',l.overtime],['Insentif',l.incentive],['Transport',l.transport],['Bonus kehadiran',l.bonus_attendance],['Bonus lain',l.bonus_other]].filter(x=>+x[1]);
+  const ded=[[`Absen${c.days?` (${c.days} hari)`:''}`,c.absence],['Terlambat',l.late_amount],['Kas bon',l.kasbon],['Piutang / lain-lain',l.piutang]].filter(x=>+x[1]);
+  return `<div class="slip"><div class="slip-h"><b>HASH INN MARINA</b><div class="small">Komp. Marina-Walk R19-21, Jl. Piere Tendean, Boulevard Manado</div></div>
+    <div class="slip-t">SLIP GAJI BULAN ${monthLabel(S.prPeriod).toUpperCase()}</div>
+    <div class="spread"><b>${esc(l.name)}</b><span class="small">${t(l.dept)}${l.position?' · '+esc(l.position):''}</span></div>
+    <table class="t"><tbody><tr class="sec"><td colspan="2">Penerimaan</td></tr>${earn.map(x=>row(x[0], num(x[1]))).join('')}${row('<b>Jumlah</b>', `<b>${num(c.gross)}</b>`)}
+      <tr class="sec"><td colspan="2">Potongan</td></tr>${ded.map(x=>row(x[0], num(x[1]))).join('')||row('—','0')}${row('<b>Jumlah</b>', `<b>${num(c.gross-c.thp)}</b>`)}
+      <tr class="big"><td>Total diterima</td><td class="right">Rp ${num(c.thp)}</td></tr></tbody></table>
+    <div class="small muted" style="margin-top:4px">Dibayar via ${esc(accName(l.pay_account))}${l.note?' · '+esc(l.note):''}</div>
+    <div class="slip-sign"><div>Manado, ${pdate}<br>Penerima,<br><br><br><br>( ${esc(l.name)} )</div><div>Mengetahui,<br><br><br><br><br>( ________________ )</div></div></div>`;
+}
+function prPrint(){
+  const st=prSettings(); let el=document.getElementById('printArea'); if(el) el.remove();
+  el=document.createElement('div'); el.id='printArea'; el.innerHTML=S.prLines.map(l=>prSlipHtml(l, st)).join(''); document.body.appendChild(el);
+  document.body.classList.add('printing'); const done=()=>{ document.body.classList.remove('printing'); el.remove(); window.removeEventListener('afterprint', done); };
+  window.addEventListener('afterprint', done); window.print(); setTimeout(()=>{ if(document.body.classList.contains('printing') && !window.matchMedia('print').matches) done(); }, 1500);
+}
+async function prExport(){
+  if(S.busy) return; S.busy=true;
+  try{
+    await loadScript(XLSX_LIB);
+    const st=prSettings(), wb=new ExcelJS.Workbook(), NAVY='FF0B2A4A', NUM='#,##0;[Red]-#,##0';
+    const ws=wb.addWorksheet('Penggajian', { views:[{ state:'frozen', ySplit:3, xSplit:2 }] });
+    const cols=[['No',5],['Nama',24],['Bagian',11],['Jabatan',14],['Gaji pokok',13],['Tunjangan tetap',13],['Lembur',11],['Insentif',11],['Transport',11],['Bonus kehadiran',13],['Bonus lain',11],['Alpa (hr)',9],['Ijin (hr)',9],['Sakit (hr)',9],['Potongan absen',13],['Terlambat',11],['Gaji diterima',14],['Kas bon',12],['Piutang / lain',12],['Take home pay',15],['Kasbon %',9],['Dibayar via',16],['Catatan',30]];
+    ws.mergeCells(1,1,1,cols.length); ws.getCell(1,1).value=`Hash Inn Marina — Penggajian ${monthLabel(S.prPeriod)}`; ws.getCell(1,1).font={ bold:true, size:14, color:{ argb:NAVY } };
+    ws.getRow(3).values=cols.map(c=>c[0]); ws.getRow(3).eachCell(c=>{ c.font={ bold:true, color:{ argb:'FFFFFFFF' } }; c.fill={ type:'pattern', pattern:'solid', fgColor:{ argb:NAVY } }; c.alignment={ wrapText:true, vertical:'middle' }; });
+    cols.forEach((c,i)=>ws.getColumn(i+1).width=c[1]);
+    let r=4; const first=4;
+    S.prLines.forEach((l,i)=>{ const c=prCalc(l, st), row=ws.getRow(r);
+      row.values=[i+1, l.name, t(l.dept), l.position, +l.basic, +l.fixed_allowance, +l.overtime, +l.incentive, +l.transport, +l.bonus_attendance, +l.bonus_other, +l.days_alpa, +l.days_ijin, +l.days_sakit, c.absence, +l.late_amount, null, +l.kasbon, +l.piutang, null, null, accName(l.pay_account), l.note||''];
+      row.getCell(17).value={ formula:`SUM(E${r}:K${r})-O${r}-P${r}`, result:c.earned }; row.getCell(20).value={ formula:`Q${r}-R${r}-S${r}`, result:c.thp }; row.getCell(21).value={ formula:`IF(Q${r}<=0,0,R${r}/Q${r})`, result:c.pct };
+      [5,6,7,8,9,10,11,15,16,17,18,19,20].forEach(k=>row.getCell(k).numFmt=NUM); row.getCell(21).numFmt='0%'; r++; });
+    const tot=ws.getRow(r); tot.getCell(2).value='TOTAL'; [5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20].forEach(k=>{ const L=String.fromCharCode(64+k); tot.getCell(k).value={ formula:`SUM(${L}${first}:${L}${r-1})` }; tot.getCell(k).numFmt=NUM; });
+    tot.eachCell(c=>{ c.font={ bold:true }; c.border={ top:{ style:'thin', color:{ argb:NAVY } } }; });
+    r+=2; ws.getCell(r,2).value=`Aturan: gaji per hari = gaji pokok / ${st.divisor}; ijin ${st.deduct_ijin?'dipotong':'tidak dipotong'}; sakit ${st.deduct_sakit?'dipotong':'tidak dipotong'}; batas kasbon ${Math.round((st.kasbon_limit||0)*100)}%.`; ws.getCell(r,2).font={ italic:true, color:{ argb:'FF66768A' } };
+    const { byAcc, byDept } = prTotals(); const w2=wb.addWorksheet('Ringkasan'); w2.columns=[{ header:'', width:28 },{ header:'Rp', width:18 }];
+    w2.addRow(['Per bagian (gaji diterima)']).font={ bold:true }; Object.entries(byDept).forEach(([d,v])=>w2.addRow([`${t(d)} (${v.n} orang)`, v.earned]).getCell(2).numFmt=NUM);
+    w2.addRow([]); w2.addRow(['Uang yang dibayarkan per rekening']).font={ bold:true }; Object.entries(byAcc).forEach(([a,v])=>w2.addRow([accName(a), v]).getCell(2).numFmt=NUM);
+    const buf=await wb.xlsx.writeBuffer(); const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([buf],{ type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })); a.download=`Penggajian-${S.prPeriod}.xlsx`; document.body.appendChild(a); a.click(); a.remove();
+  }catch(e){ fail(e); } finally{ S.busy=false; }
+}
+
+/* ---------- GENERAL LEDGER (Buku Besar) ---------- */
+const GL_TYPES = ['asset','liability','equity','revenue','expense'];
+async function loadGL(){ S.gl = await api('bo_gl_data', { p_from:S.glFrom, p_to:S.glTo }); }
+const glAcc = code => ((S.gl&&S.gl.accounts)||S.boot.gl_accounts||[]).find(a=>a.code===code);
+const glName = code => { const a=glAcc(code); return a ? (S.lang==='id'?a.name_id:a.name_en) : code; };
+const glType = code => { const a=glAcc(code); return a ? a.type : ({ '1':'asset','2':'liability','3':'equity','4':'revenue' }[String(code)[0]]||'expense'); };
+function glShiftMonth(n){ const [y,m]=S.glFrom.slice(0,7).split('-').map(Number); const d=new Date(Date.UTC(y,m-1+n,1)); const s=d.toISOString().slice(0,7); if(s>today().slice(0,7)) return; const [a,b]=monthRange(s); S.glFrom=a; S.glTo=b>today()?today():b; go('gl'); }
+function glTB(){ const tb={}; (S.gl.tb||[]).forEach(x=>tb[x.code]={ opening:+x.opening, debit:+x.debit, credit:+x.credit });
+  return S.gl.accounts.map(a=>{ const x=tb[a.code]||{ opening:0, debit:0, credit:0 }; return Object.assign({ code:a.code, type:a.type, name:glName(a.code), active:a.active }, x, { closing:x.opening+x.debit-x.credit }); })
+    .concat((S.gl.tb||[]).filter(x=>!S.gl.accounts.some(a=>a.code===x.code)).map(x=>({ code:x.code, type:glType(x.code), name:x.code, opening:+x.opening, debit:+x.debit, credit:+x.credit, closing:+x.opening+(+x.debit)-(+x.credit) }))); }
+function vGL(){
+  if(!S.gl) return `<div class="card muted">…</div>`;
+  const owner=S.user.role==='owner', v=S.glView||'tb';
+  const views=[['tb','gl_tb'],['bs','gl_bs'],['is','gl_is'],['acct','gl_acct']].concat(owner?[['ju','gl_ju'],['coa','gl_coa']]:[]);
+  return `<div class="spread" style="margin-bottom:10px"><h2 style="margin:0">${t('gl')}</h2><div class="row noprint"><button class="btn sm" onclick="glShiftMonth(-1)">${t('prev')}</button>
+      <input type="date" aria-label="${t('from')}" value="${S.glFrom}" onchange="S.glFrom=this.value" style="width:auto"><input type="date" aria-label="${t('to')}" value="${S.glTo}" max="${today()}" onchange="S.glTo=this.value" style="width:auto">
+      <button class="btn sm primary" onclick="go('gl')">${t('show')}</button><button class="btn sm" onclick="glShiftMonth(1)">${t('next')}</button><button class="btn sm" onclick="glExport()">${t('excel')}</button><button class="btn sm" onclick="window.print()">${t('print')}</button></div></div>
+    <div class="chips noprint" style="margin-bottom:10px">${views.map(x=>`<button class="${v===x[0]?'active':''}" onclick="S.glView='${x[0]}';render()">${t(x[1])}</button>`).join('')}</div>
+    <div class="small muted" style="margin-bottom:8px">${t('gl_period')} ${S.gl.from} — ${S.gl.to} · ${t('cash_start')} ${S.gl.start_date}</div>
+    ${({ tb:vGlTB, bs:vGlBS, is:vGlIS, acct:vGlAcct, ju:vGlJU, coa:vGlCOA }[v])()}`;
+}
+function vGlTB(){
+  const rows=glTB().filter(r=>r.opening||r.debit||r.credit||r.closing); const s=k=>rows.reduce((a,r)=>a+r[k],0);
+  const dr=rows.reduce((a,r)=>a+Math.max(r.closing,0),0), cr=rows.reduce((a,r)=>a+Math.max(-r.closing,0),0);
+  return `<div class="card scroll"><table class="t"><thead><tr><th>${t('gl_code')}</th><th>${t('account')}</th><th class="right">${t('opening')}</th><th class="right">Debit</th><th class="right">${t('gl_credit')}</th><th class="right">${t('gl_bal_dr')}</th><th class="right">${t('gl_bal_cr')}</th></tr></thead><tbody>
+    ${GL_TYPES.map(ty=>{ const l=rows.filter(r=>r.type===ty); return l.length?`<tr class="sec"><td colspan="7">${t('gl_t_'+ty)}</td></tr>`+l.map(r=>`<tr><td><a href="#" onclick="S.glAcct='${r.code}';S.glView='acct';render();return false">${r.code}</a></td><td>${esc(r.name)}</td><td class="right">${r.opening?money(r.opening):'—'}</td><td class="right">${r.debit?num(r.debit):'—'}</td><td class="right">${r.credit?num(r.credit):'—'}</td><td class="right">${r.closing>0?num(r.closing):''}</td><td class="right">${r.closing<0?num(-r.closing):''}</td></tr>`).join(''):''; }).join('')||`<tr><td colspan="7" class="muted">${t('none')}</td></tr>`}
+    <tr class="tot"><td></td><td>${t('total')}</td><td></td><td class="right">${num(s('debit'))}</td><td class="right">${num(s('credit'))}</td><td class="right">${num(dr)}</td><td class="right">${num(cr)}</td></tr></tbody></table>
+    <div style="margin-top:8px">${dr===cr&&s('debit')===s('credit')?`<span class="pill green">✓ ${t('gl_balanced')}</span>`:`<span class="pill red">${t('gl_unbalanced')} ${money(dr-cr)}</span>`}</div></div>`;
+}
+function vGlBS(){
+  const rows=glTB(), sum=ty=>rows.filter(r=>r.type===ty).reduce((a,r)=>a+r.closing,0);
+  const A=sum('asset'), L=-sum('liability'), E=-sum('equity'), P=-(sum('revenue')+sum('expense'));
+  const block=(ty,sign)=>rows.filter(r=>r.type===ty&&r.closing).map(r=>`<tr><td class="small muted">${r.code}</td><td>${esc(r.name)}</td><td class="right">${money(sign*r.closing)}</td></tr>`).join('')||`<tr><td></td><td class="muted">—</td><td></td></tr>`;
+  return `<div class="grid two"><div class="card"><h3>${t('gl_t_asset')}</h3><table class="t"><tbody>${block('asset',1)}<tr class="tot"><td></td><td>${t('gl_tot_asset')}</td><td class="right">${money(A)}</td></tr></tbody></table></div>
+    <div class="card"><h3>${t('gl_t_liability')}</h3><table class="t"><tbody>${block('liability',-1)}<tr class="tot"><td></td><td>${t('gl_tot_liab')}</td><td class="right">${money(L)}</td></tr></tbody></table>
+      <h3 style="margin-top:14px">${t('gl_t_equity')}</h3><table class="t"><tbody>${block('equity',-1)}<tr><td></td><td>${t('gl_cur_profit')}</td><td class="right ${P<0?'neg':''}">${money(P)}</td></tr><tr class="tot"><td></td><td>${t('gl_tot_eq')}</td><td class="right">${money(E+P)}</td></tr>
+      <tr class="big"><td></td><td>${t('gl_tot_le')}</td><td class="right">${money(L+E+P)}</td></tr></tbody></table>
+      <div style="margin-top:8px">${A===L+E+P?`<span class="pill green">✓ ${t('gl_balanced')}</span>`:`<span class="pill red">${t('gl_unbalanced')} ${money(A-L-E-P)}</span>`}</div></div></div>
+    <div class="small muted" style="margin-top:8px">${t('gl_bs_note')} ${S.gl.to}.</div>`;
+}
+function vGlIS(){
+  const rows=glTB(), pd=r=>r.type==='revenue'?r.credit-r.debit:r.debit-r.credit;
+  const rev=rows.filter(r=>r.type==='revenue'&&pd(r)), cogs=rows.filter(r=>r.type==='expense'&&r.code[0]==='5'&&pd(r)), opx=rows.filter(r=>r.type==='expense'&&r.code[0]==='6'&&r.code.slice(0,2)!=='68'&&r.code.slice(0,2)!=='69'&&pd(r)), oth=rows.filter(r=>r.type==='expense'&&(r.code.slice(0,2)==='68'||r.code.slice(0,2)==='69')&&pd(r));
+  const s=l=>l.reduce((a,r)=>a+pd(r),0), R=s(rev), C=s(cogs), O=s(opx), X=s(oth);
+  const lines=l=>l.map(r=>`<tr><td class="small muted">${r.code}</td><td>${esc(r.name)}</td><td class="right">${num(pd(r))}</td><td class="right muted small">${R?(pd(r)/R*100).toFixed(1)+'%':''}</td></tr>`).join('');
+  return `<div class="card scroll"><table class="t"><tbody><tr class="sec"><td colspan="4">${t('s_revenue')}</td></tr>${lines(rev)}<tr class="tot"><td></td><td>${t('t_revenue')}</td><td class="right">${num(R)}</td><td></td></tr>
+    <tr class="sec"><td colspan="4">${t('s_cogs')}</td></tr>${lines(cogs)}<tr class="tot"><td></td><td>${t('t_gross')}</td><td class="right">${num(R-C)}</td><td></td></tr>
+    <tr class="sec"><td colspan="4">${t('s_opex')} & ${t('s_payroll')}</td></tr>${lines(opx)}<tr class="big"><td></td><td>${t('t_op')}</td><td class="right ${R-C-O<0?'neg':''}">${money(R-C-O)}</td><td></td></tr>
+    ${oth.length?`<tr class="sec"><td colspan="4">${t('gl_other_exp')}</td></tr>${lines(oth)}`:''}<tr class="big"><td></td><td>${t('gl_net')}</td><td class="right ${R-C-O-X<0?'neg':''}">${money(R-C-O-X)}</td><td></td></tr></tbody></table>
+    <div class="small muted" style="margin-top:8px">${t('gl_is_note')}</div></div>`;
+}
+function vGlAcct(){
+  const rows=glTB(), code=S.glAcct||(rows.find(r=>r.debit||r.credit)||rows[0]||{}).code; const r=rows.find(x=>x.code===code)||{ opening:0, debit:0, credit:0, closing:0 };
+  const lines=(S.gl.lines||[]).filter(l=>l.code===code); let bal=r.opening;
+  const src={ SA:t('gl_src_sa'), BO:t('gl_src_bo'), PMS:'PMS', POS:'POS', JU:t('gl_src_ju') };
+  return `<div class="card"><div class="row" style="margin-bottom:8px"><select aria-label="${t('account')}" onchange="S.glAcct=this.value;render()" style="max-width:420px">${rows.map(x=>`<option value="${x.code}" ${x.code===code?'selected':''}>${x.code} · ${esc(x.name)}${x.debit||x.credit?' •':''}</option>`).join('')}</select></div>
+    <div class="scroll"><table class="t"><thead><tr><th>${t('date')}</th><th>${t('source')}</th><th>${t('desc')}</th><th>${t('dept')}</th><th class="right">Debit</th><th class="right">${t('gl_credit')}</th><th class="right">${t('balance')}</th></tr></thead><tbody>
+    <tr><td></td><td></td><td class="muted">${t('opening')}</td><td></td><td></td><td></td><td class="right bold">${money(bal)}</td></tr>
+    ${lines.map(l=>{ bal+=(+l.debit)-(+l.credit); return `<tr><td style="white-space:nowrap">${l.d}</td><td><span class="pill gray">${src[l.src]||l.src}</span></td><td>${esc(l.memo)}</td><td>${l.dept?t(l.dept):''}</td><td class="right">${+l.debit?num(l.debit):''}</td><td class="right">${+l.credit?num(l.credit):''}</td><td class="right">${money(bal)}</td></tr>`; }).join('')}
+    <tr class="tot"><td></td><td></td><td>${t('total')}</td><td></td><td class="right">${num(r.debit)}</td><td class="right">${num(r.credit)}</td><td class="right">${money(r.closing)}</td></tr></tbody></table></div>
+    <div class="small muted" style="margin-top:6px">${t('gl_sign')}</div></div>`;
+}
+function vGlJU(){
+  const J=S.gl.journals||[], f=S.juForm;
+  const opts=S.gl.accounts.filter(a=>a.active).map(a=>`<option value="${a.code}">${a.code} · ${esc(S.lang==='id'?a.name_id:a.name_en)}</option>`).join('');
+  const form = f ? `<div class="card" style="margin-bottom:12px"><h3>${t('gl_new_ju')}</h3><div class="formgrid"><div><label class="f" for="ju_date">${t('date')}</label><input id="ju_date" type="date" value="${f.date}" min="${S.gl.start_date}" max="${today()}" onchange="S.juForm.date=this.value"></div>
+      <div><label class="f" for="ju_memo">${t('desc')}</label><input id="ju_memo" value="${esc(f.memo)}" oninput="S.juForm.memo=this.value"></div></div>
+      <div class="scroll"><table class="t" style="margin-top:10px"><thead><tr><th>${t('account')}</th><th>${t('dept')}</th><th class="right">Debit</th><th class="right">${t('gl_credit')}</th><th>${t('note')}</th><th></th></tr></thead><tbody>
+      ${f.lines.map((l,i)=>`<tr><td><select aria-label="${t('account')}" style="min-width:240px" onchange="S.juForm.lines[${i}].code=this.value">${opts.replace(`value="${l.code}"`,`value="${l.code}" selected`)}</select></td>
+        <td><select aria-label="${t('dept')}" onchange="S.juForm.lines[${i}].dept=this.value">${DEPTS.map(d=>`<option value="${d}" ${d===l.dept?'selected':''}>${t(d)}</option>`).join('')}</select></td>
+        <td><input inputmode="numeric" aria-label="Debit" value="${l.debit||''}" style="width:120px;text-align:right" oninput="S.juForm.lines[${i}].debit=parseInt(this.value.replace(/\\D/g,''))||0;juTot()"></td>
+        <td><input inputmode="numeric" aria-label="${t('gl_credit')}" value="${l.credit||''}" style="width:120px;text-align:right" oninput="S.juForm.lines[${i}].credit=parseInt(this.value.replace(/\\D/g,''))||0;juTot()"></td>
+        <td><input aria-label="${t('note')}" value="${esc(l.memo||'')}" oninput="S.juForm.lines[${i}].memo=this.value"></td><td>${f.lines.length>2?`<button class="btn sm" onclick="S.juForm.lines.splice(${i},1);render()">×</button>`:''}</td></tr>`).join('')}
+      <tr class="tot"><td><button class="btn sm" onclick="S.juForm.lines.push({ code:'${S.gl.accounts[0]?S.gl.accounts[0].code:''}', dept:'umum', debit:0, credit:0, memo:'' });render()">＋ ${t('gl_add_line')}</button></td><td></td><td class="right" id="juD"></td><td class="right" id="juC"></td><td id="juS"></td><td></td></tr></tbody></table></div>
+      <div class="row" style="margin-top:10px"><button class="btn green" onclick="juSave()">${t('save')}</button><button class="btn" onclick="S.juForm=null;render()">${t('cancel')}</button></div></div>`
+    : `<button class="btn primary noprint" style="margin-bottom:12px" onclick="juNew()">＋ ${t('gl_new_ju')}</button>`;
+  setTimeout(()=>{ if(S.juForm) juTot(); }, 0);
+  return form+`<div class="card scroll"><table class="t"><thead><tr><th>${t('date')}</th><th>${t('desc')}</th><th>${t('gl_lines')}</th><th class="right">Rp</th><th>${t('by')}</th><th></th></tr></thead><tbody>
+    ${J.map(j=>`<tr class="${j.voided?'voided':''}"><td style="white-space:nowrap">${j.date}</td><td>${esc(j.memo)}${j.voided?` <span class="small">[${esc(j.void_reason||'')}]</span>`:''}</td>
+      <td class="small">${(j.lines||[]).map(l=>`${l.code} ${esc(glName(l.code))}: ${+l.debit?'D '+num(l.debit):'K '+num(l.credit)}`).join('<br>')}</td><td class="right">${num(j.amount)}</td><td class="small muted">${esc(j.by)}</td>
+      <td>${j.voided?'':`<button class="btn sm danger" onclick="juVoid('${j.id}')">${t('void')}</button>`}</td></tr>`).join('')||`<tr><td class="muted" colspan="6">${t('none')}</td></tr>`}</tbody></table>
+    <div class="small muted" style="margin-top:6px">${t('gl_ju_note')}</div></div>`;
+}
+function juNew(){ const c=(S.gl.accounts[0]||{}).code||''; S.juForm={ date:today(), memo:'', lines:[{ code:c, dept:'umum', debit:0, credit:0, memo:'' },{ code:c, dept:'umum', debit:0, credit:0, memo:'' }] }; render(); }
+function juTot(){ const f=S.juForm; if(!f) return; const d=f.lines.reduce((a,l)=>a+(+l.debit||0),0), c=f.lines.reduce((a,l)=>a+(+l.credit||0),0);
+  const set=(id,h)=>{ const el=document.getElementById(id); if(el) el.innerHTML=h; }; set('juD', num(d)); set('juC', num(c)); set('juS', d===c&&d>0?`<span class="pill green">✓</span>`:`<span class="pill red">${t('diff')} ${num(d-c)}</span>`); }
+async function juSave(){ const f=S.juForm, lines=f.lines.filter(l=>(+l.debit||0)||(+l.credit||0));
+  if(lines.some(l=>(+l.debit||0)&&(+l.credit||0))){ toast(t('gl_one_side'), true); return; }
+  try{ await api('bo_journal_save', { p:{ date:f.date, memo:f.memo, lines } }); S.juForm=null; await loadGL(); render(); toast(t('saved')); }catch(e){ fail(e); } }
+async function juVoid(id){ const r = await ask({ title:t('void'), fields:[{ id:'reason', label:t('reason'), value:'' }] }); if(!r) return; if(!r.reason){ toast(t('reason')+'?', true); return; }
+  try{ await api('bo_journal_void', { p_id:id, p_reason:r.reason }); await loadGL(); render(); }catch(e){ fail(e); } }
+function vGlCOA(){
+  return `<div class="card"><div class="spread"><h3 style="margin:0">${t('gl_coa')}</h3><button class="btn sm primary" onclick="coaEdit()">＋ ${t('gl_add_acc')}</button></div>
+    <div class="scroll"><table class="t" style="margin-top:6px"><tbody>${GL_TYPES.map(ty=>`<tr class="sec"><td colspan="4">${t('gl_t_'+ty)}</td></tr>`+S.gl.accounts.filter(a=>a.type===ty).map(a=>`<tr class="${a.active?'':'voided'}"><td>${a.code}</td><td>${esc(a.name_id)}</td><td class="small muted">${esc(a.name_en)}</td><td class="right"><button class="btn sm" onclick="coaEdit('${a.code}')">${t('edit')}</button></td></tr>`).join('')).join('')}</tbody></table></div>
+    <div class="small muted" style="margin-top:6px">${t('gl_coa_note')}</div></div>`;
+}
+async function coaEdit(code){ const a=code?S.gl.accounts.find(x=>x.code===code):{ code:'', name_id:'', name_en:'', active:true };
+  const r = await ask({ title:code?`${a.code} · ${a.name_id}`:t('gl_add_acc'), ok:t('save'), fields:(code?[]:[{ id:'code', label:t('gl_code')+' (1xxx '+t('gl_t_asset')+', 2xxx '+t('gl_t_liability')+', 3xxx '+t('gl_t_equity')+', 4xxx '+t('gl_t_revenue')+', 5–6xxx '+t('gl_t_expense')+')', value:'' }])
+    .concat([{ id:'name_id', label:t('name_id'), value:a.name_id }, { id:'name_en', label:t('name_en'), value:a.name_en }, { id:'active', label:t('active'), type:'checkbox', value:a.active }]) });
+  if(!r || !r.name_id) return; try{ await api('bo_gl_account_save', { p:{ code:code||r.code, name_id:r.name_id, name_en:r.name_en, active:r.active } }); await Promise.all([loadGL(), reboot()]); render(); toast(t('saved')); }catch(e){ fail(e); } }
+async function glExport(){
+  if(S.busy) return; S.busy=true;
+  try{ await loadScript(XLSX_LIB); const wb=new ExcelJS.Workbook(), NUM='#,##0;[Red]-#,##0', NAVY='FF0B2A4A';
+    const head=(ws)=>ws.getRow(1).eachCell(c=>{ c.font={ bold:true, color:{ argb:'FFFFFFFF' } }; c.fill={ type:'pattern', pattern:'solid', fgColor:{ argb:NAVY } }; });
+    const w1=wb.addWorksheet('Neraca Saldo'); w1.columns=[['Kode',8],['Akun',38],['Jenis',11],['Saldo awal',16],['Debit',16],['Kredit',16],['Saldo akhir',16]].map(c=>({ header:c[0], width:c[1] }));
+    glTB().filter(r=>r.opening||r.debit||r.credit).forEach(r=>{ const row=w1.addRow([r.code, r.name, t('gl_t_'+r.type), r.opening, r.debit, r.credit, r.closing]); [4,5,6,7].forEach(k=>row.getCell(k).numFmt=NUM); }); head(w1);
+    const w2=wb.addWorksheet('Jurnal'); w2.columns=[['Tanggal',12],['Sumber',8],['Ref',10],['Keterangan',50],['Kode',8],['Akun',32],['Bagian',10],['Debit',15],['Kredit',15]].map(c=>({ header:c[0], width:c[1] }));
+    (S.gl.lines||[]).forEach(l=>{ const row=w2.addRow([l.d, l.src, l.ref, l.memo, l.code, glName(l.code), l.dept, +l.debit||null, +l.credit||null]); [8,9].forEach(k=>row.getCell(k).numFmt=NUM); }); head(w2);
+    const buf=await wb.xlsx.writeBuffer(); const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([buf],{ type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })); a.download=`Buku-Besar-${S.gl.from}_${S.gl.to}.xlsx`; document.body.appendChild(a); a.click(); a.remove();
+  }catch(e){ fail(e); } finally{ S.busy=false; }
+}
+
+/* ---------- STOCK COUNT (trial) ---------- */
+const ST_LOCS = ['dapur','bar','bakery','gudang'], ST_GRPS = ['makanan','minuman','kue','pajangan'];
+async function loadStock(){ S.st = await api('bo_stock_data', { p_month:S.stMonth }); }
+function stShiftMonth(n){ const [y,m]=S.stMonth.split('-').map(Number); const d=new Date(Date.UTC(y,m-1+n,1)); const s=d.toISOString().slice(0,7); if(s>today().slice(0,7)) return; S.stMonth=s; go('stock'); }
+const stVal = l => Math.round((+l.qty||0)*(+l.unit_cost||0));
+function vStock(){
+  if(!S.st) return `<div class="card muted">…</div>`;
+  const v=S.stView||'counts';
+  return `<div class="spread" style="margin-bottom:10px"><h2 style="margin:0">${t('stock')}</h2>
+    <div class="chips noprint">${[['counts','st_v_counts'],['cost','st_v_cost']].map(x=>`<button class="${v===x[0]?'active':''}" onclick="S.stView='${x[0]}';render()">${t(x[1])}</button>`).join('')}</div></div>
+    <div class="banner">${t('st_trial')}</div>${v==='cost'?vStCost():(S.stForm?vStForm():vStList())}`;
+}
+function vStList(){
+  const owner=S.user.role==='owner', C=S.st.counts;
+  return `<button class="btn primary noprint" style="margin-bottom:12px" onclick="stNew()">＋ ${t('st_new')}</button>
+  <div class="card scroll"><table class="t"><thead><tr><th>${t('date')}</th><th>${t('st_loc')}</th><th>Status</th><th class="right">${t('st_items')}</th><th class="right">${t('st_value')}</th><th>${t('by')}</th><th></th></tr></thead><tbody>
+  ${C.map(c=>`<tr><td>${c.date}</td><td>${t('loc_'+c.location)}</td><td><span class="pill ${c.status==='final'?'green':'amber'}">${c.status==='final'?t('st_final'):t('pr_st_draft')}</span></td><td class="right">${c.n}</td><td class="right bold">${money(c.value)}</td><td class="small muted">${esc(c.final_by||c.by||'')}</td>
+    <td class="right noprint" style="white-space:nowrap"><button class="btn sm" onclick="stOpen('${c.id}')">${c.status==='final'?t('st_view'):t('edit')}</button> <button class="btn sm" onclick="stPrintSheet('${c.id}')">${t('st_sheet')}</button>
+      ${owner?(c.status==='final'?` <button class="btn sm" onclick="stReopen('${c.id}')">${t('st_reopen')}</button>`:` <button class="btn sm green" onclick="stFinal('${c.id}')">${t('st_finalize')}</button>`)+` <button class="btn sm danger" onclick="stDelete('${c.id}')">×</button>`:''}</td></tr>`).join('')||`<tr><td colspan="7" class="muted">${t('st_none')}</td></tr>`}
+  </tbody></table></div><div class="small muted" style="margin-top:8px">${t('st_help')}</div>`;
+}
+function stNew(){ S.stForm={ id:'', count_date:today(), location:ls('stLoc','dapur'), note:'', status:'draft', lines:[] }; stCopyLast(true); render(); }
+function stOpen(id){ const c=S.st.counts.find(x=>x.id===id); if(!c) return; S.stForm={ id:c.id, count_date:c.date, location:c.location, note:c.note||'', status:c.status, lines:c.lines.map(l=>Object.assign({}, l)) }; render(); }
+function stCopyLast(silent){
+  const f=S.stForm, last=S.st.counts.find(c=>c.location===f.location && c.id!==f.id && c.lines.length);
+  if(!last){ if(!silent) toast(t('st_nolast'), true); if(!f.lines.length) f.lines=[{ item:'', grp:'makanan', unit:'', qty:'', unit_cost:'' }]; return; }
+  const have=new Set(f.lines.filter(l=>l.item).map(l=>l.item.trim().toLowerCase()));
+  f.lines=f.lines.filter(l=>l.item).concat(last.lines.filter(l=>!have.has(l.item.trim().toLowerCase())).map(l=>({ item:l.item, grp:l.grp, unit:l.unit, qty:'', unit_cost:l.unit_cost })));
+  if(!silent){ render(); toast(`${t('st_copied')} ${last.date}`); }
+}
+function stSet(i,k,v){ const l=S.stForm.lines[i]; if(!l) return;
+  if(k==='qty') l.qty=v===''?'':(parseFloat(String(v).replace(',','.'))||0); else if(k==='unit_cost') l.unit_cost=parseInt(String(v).replace(/[^\d]/g,''))||0; else l[k]=v;
+  if(k==='item'){ const m=(S.st.items||[]).find(x=>x.item.toLowerCase()===String(v).trim().toLowerCase()); const ap=(S.st.avg_prices||{})[String(v).trim().toLowerCase()];
+    if(m){ l.grp=m.grp; l.unit=l.unit||m.unit; if(!l.unit_cost) l.unit_cost=m.unit_cost; render(); return; } if(ap && !l.unit_cost){ l.unit_cost=ap; render(); return; } }
+  const el=document.getElementById('st_v_'+i); if(el) el.textContent=num(stVal(l)); const tt=document.getElementById('stTot'); if(tt) tt.innerHTML=stTotHtml(); }
+function stTotHtml(){ const by={}; S.stForm.lines.forEach(l=>{ by[l.grp]=(by[l.grp]||0)+stVal(l); }); const tot=Object.values(by).reduce((a,b)=>a+b,0);
+  return ST_GRPS.filter(g=>by[g]).map(g=>`${t('g_'+g)} <b>${num(by[g])}</b>`).join(' · ')+` &nbsp; ${t('total')} <b>${money(tot)}</b>`; }
+function vStForm(){
+  const f=S.stForm, ro=f.status==='final', dis=ro?'disabled':'', owner=S.user.role==='owner';
+  return `<div class="card"><div class="spread"><h3 style="margin:0">${ro?t('st_view'):(f.id?t('edit'):t('st_new'))} · ${t('loc_'+f.location)} · ${f.count_date}</h3>${ro?`<span class="pill green">${t('st_final')}</span>`:''}</div>
+    <div class="formgrid" style="grid-template-columns:1fr 1fr 2fr"><div><label class="f" for="st_date">${t('st_date')}</label><input id="st_date" type="date" ${dis} max="${today()}" value="${f.count_date}" onchange="S.stForm.count_date=this.value"></div>
+      <div><label class="f" for="st_loc">${t('st_loc')}</label><select id="st_loc" ${dis} onchange="S.stForm.location=this.value;lsSet('stLoc',this.value);render()">${ST_LOCS.map(l=>`<option value="${l}" ${l===f.location?'selected':''}>${t('loc_'+l)}</option>`).join('')}</select></div>
+      <div><label class="f" for="st_note">${t('note')}</label><input id="st_note" ${dis} value="${esc(f.note)}" oninput="S.stForm.note=this.value"></div></div>
+    <datalist id="dlItems">${(S.st.items||[]).map(x=>`<option value="${esc(x.item)}">`).join('')}</datalist>
+    <div class="scroll"><table class="t" style="margin-top:10px"><thead><tr><th>${t('st_item')}</th><th>${t('st_grp')}</th><th>${t('unit')}</th><th class="right">${t('st_qty')}</th><th class="right">${t('st_cost')}</th><th class="right">${t('st_value')}</th><th></th></tr></thead><tbody>
+    ${f.lines.map((l,i)=>`<tr><td><input ${dis} list="dlItems" aria-label="${t('st_item')}" value="${esc(l.item)}" style="min-width:200px" onchange="stSet(${i},'item',this.value)"></td>
+      <td><select ${dis} aria-label="${t('st_grp')}" onchange="stSet(${i},'grp',this.value)">${ST_GRPS.map(g=>`<option value="${g}" ${g===l.grp?'selected':''}>${t('g_'+g)}</option>`).join('')}</select></td>
+      <td><input ${dis} aria-label="${t('unit')}" value="${esc(l.unit||'')}" style="width:80px" oninput="stSet(${i},'unit',this.value)"></td>
+      <td><input ${dis} aria-label="${t('st_qty')}" inputmode="decimal" value="${l.qty===''||l.qty==null?'':l.qty}" style="width:80px;text-align:right" oninput="stSet(${i},'qty',this.value)"></td>
+      <td><input ${dis} aria-label="${t('st_cost')}" inputmode="numeric" value="${l.unit_cost?num(l.unit_cost):''}" style="width:110px;text-align:right" oninput="stSet(${i},'unit_cost',this.value)"></td>
+      <td class="right" id="st_v_${i}">${num(stVal(l))}</td><td>${ro?'':`<button class="btn sm" aria-label="${t('pr_remove')}" onclick="S.stForm.lines.splice(${i},1);render()">×</button>`}</td></tr>`).join('')}</tbody></table></div>
+    <div class="small" id="stTot" style="margin:8px 0">${stTotHtml()}</div>
+    <div class="row">${ro?'':`<button class="btn sm" onclick="S.stForm.lines.push({ item:'', grp:'makanan', unit:'', qty:'', unit_cost:'' });render()">＋ ${t('gl_add_line')}</button><button class="btn sm" onclick="stCopyLast()">${t('st_copy')}</button>
+      <button class="btn green" onclick="stSave()">${t('save')}</button>${owner&&f.id?`<button class="btn primary" onclick="stSave(true)">${t('st_save_final')}</button>`:''}`}
+      <button class="btn" onclick="S.stForm=null;render()">${ro?t('back'):t('cancel')}</button></div>
+    <div class="small muted" style="margin-top:8px">${t('st_form_help')}</div></div>`;
+}
+async function stSave(finalize){
+  const f=S.stForm; if(!f.lines.some(l=>l.item)){ toast(t('st_item')+'?', true); return; }
+  const missing=f.lines.filter(l=>l.item && (l.qty===''||l.qty==null)).length;
+  if(missing && !confirm(`${missing} ${t('st_noqty')}`)) return;
+  try{ const id=await api('bo_stock_save', { p:{ id:f.id, count_date:f.count_date, location:f.location, note:f.note, lines:f.lines.map(l=>Object.assign({}, l, { qty:l.qty===''?0:l.qty })) } });
+    if(finalize) await api('bo_stock_finalize', { p_id:id }); S.stForm=null; await loadStock(); render(); toast(t('saved')); }catch(e){ fail(e); }
+}
+async function stFinal(id){ try{ await api('bo_stock_finalize', { p_id:id }); await loadStock(); render(); toast(t('saved')); }catch(e){ fail(e); } }
+async function stReopen(id){ try{ await api('bo_stock_reopen', { p_id:id }); await loadStock(); render(); }catch(e){ fail(e); } }
+async function stDelete(id){ if(!confirm(t('st_del_q'))) return; try{ await api('bo_stock_delete', { p_id:id }); await loadStock(); render(); }catch(e){ fail(e); } }
+function stPrintSheet(id){
+  const c=S.st.counts.find(x=>x.id===id); if(!c) return; let el=document.getElementById('printArea'); if(el) el.remove();
+  el=document.createElement('div'); el.id='printArea';
+  el.innerHTML=`<div style="font-size:12px"><h3>Hash Inn Marina · ${t('st_sheet')} · ${t('loc_'+c.location)}</h3><div>${t('st_date')}: ____________ &nbsp; ${t('by')}: ____________</div>
+    <table class="t" style="margin-top:8px"><thead><tr><th>#</th><th>${t('st_item')}</th><th>${t('st_grp')}</th><th>${t('unit')}</th><th class="right">${t('st_last')} (${c.date})</th><th>${t('st_qty')}</th></tr></thead><tbody>
+    ${c.lines.map((l,i)=>`<tr><td>${i+1}</td><td>${esc(l.item)}</td><td>${t('g_'+l.grp)}</td><td>${esc(l.unit)}</td><td class="right">${l.qty}</td><td style="border-bottom:1px solid #999;width:110px"></td></tr>`).join('')}
+    ${Array.from({ length:8 }).map(()=>`<tr><td></td><td style="border-bottom:1px solid #ccc"></td><td></td><td></td><td></td><td style="border-bottom:1px solid #999"></td></tr>`).join('')}</tbody></table></div>`;
+  document.body.appendChild(el); document.body.classList.add('printing'); const done=()=>{ document.body.classList.remove('printing'); el.remove(); window.removeEventListener('afterprint', done); };
+  window.addEventListener('afterprint', done); window.print(); setTimeout(()=>{ if(document.body.classList.contains('printing') && !window.matchMedia('print').matches) done(); }, 1500);
+}
+function vStCost(){
+  const d=S.st, rows=d.cost||[], hasOpen=d.opening_counts.length, hasClose=d.closing_counts.length;
+  const pct=(a,b)=>b?(a/b*100).toFixed(1)+'%':'—', tot=k=>rows.reduce((a,r)=>a+(+r[k]||0),0);
+  const used=r=>(+r.opening)+(+r.purchases)-(+r.closing);
+  const line=(lbl,r)=>`<tr${lbl===t('total')?' class="tot"':''}><td>${lbl}</td><td class="right">${num(r.opening)}</td><td class="right">${num(r.purchases)}</td><td class="right">${hasClose?num(r.closing):'—'}</td><td class="right bold">${hasClose?num(used(r)):'—'}</td><td class="right">${num(r.sales)}</td>
+    <td class="right bold ${hasClose&&r.sales&&used(r)/r.sales>0.4?'neg':''}">${hasClose?pct(used(r),r.sales):'—'}</td><td class="right muted">${pct(r.purchases,r.sales)}</td></tr>`;
+  const T_={ opening:tot('opening'), purchases:tot('purchases'), closing:tot('closing'), sales:tot('sales') };
+  const locs=l=>l.map(x=>`${t('loc_'+x.location)} ${x.date}`).join(', ')||t('none');
+  return `<div class="spread noprint" style="margin-bottom:10px"><div class="row"><button class="btn sm" onclick="stShiftMonth(-1)">${t('prev')}</button><b style="font-size:16px;color:var(--navy)">${monthLabel(S.stMonth)}</b><button class="btn sm" onclick="stShiftMonth(1)" ${S.stMonth>=today().slice(0,7)?'disabled':''}>${t('next')}</button></div><button class="btn sm" onclick="window.print()">${t('print')}</button></div>
+  <div class="card scroll"><table class="t"><thead><tr><th></th><th class="right">${t('st_open')}</th><th class="right">+ ${t('st_buy')}</th><th class="right">− ${t('st_close')}</th><th class="right">= ${t('st_used')}</th><th class="right">${t('st_sales')}</th><th class="right">${t('st_pct')}</th><th class="right">${t('st_pct_buy')}</th></tr></thead><tbody>
+    ${rows.map(r=>line(t('g_'+r.grp), r)).join('')}${line(t('total'), T_)}</tbody></table>
+    <div class="small" style="margin-top:10px">${t('st_open_from')}: <b>${locs(d.opening_counts)}</b> · ${t('st_close_from')}: <b>${locs(d.closing_counts)}</b></div>
+    ${!hasOpen?`<div class="pill amber" style="margin-top:6px">${t('st_w_open')}</div>`:''} ${!hasClose?`<div class="pill amber" style="margin-top:6px">${t('st_w_close')}</div>`:''}
+    <div class="small muted" style="margin-top:8px">${t('st_cost_help')}</div></div>`;
+}
+
+boot();
+</script>
+</body>
+</html>

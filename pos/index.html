@@ -1,0 +1,901 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Marina Restaurant — POS</title>
+<meta name="theme-color" content="#0B2A4A">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Marina POS">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(e){console.warn('SW',e)})})}</script>
+
+<style>
+:root{
+  --navy:#0B2A4A; --navy-2:#123A63; --navy-3:#1B4B7C; --accent:#4F9FD8; --accent-soft:#E9F3FB;
+  --bg:#F2F6FA; --card:#FFFFFF; --border:#DFE6EE; --text:#152436; --muted:#66768A;
+  --green:#2F9E5C; --green-soft:#E7F6EC; --amber:#C98A1E; --amber-soft:#FBF1DE;
+  --red:#C24C43; --red-soft:#FBEAE8; --gray-soft:#EEF1F4;
+  --radius:10px; --shadow:0 1px 2px rgba(11,42,74,.06),0 4px 14px rgba(11,42,74,.05);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;background:var(--bg);color:var(--text);font-size:14px}
+button{font-family:inherit;font-size:inherit;cursor:pointer}
+input,select,textarea{font-family:inherit;font-size:15px;padding:9px 10px;border:1px solid var(--border);border-radius:8px;background:#fff;color:var(--text);width:100%}
+input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+#app{min-height:100%;display:flex;flex-direction:column}
+header{background:linear-gradient(135deg,var(--navy),var(--navy-3));color:#fff;padding:10px 16px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:10px}
+.brand-mark{width:34px;height:34px;border-radius:8px;background:var(--accent);display:flex;align-items:center;justify-content:center;font-weight:800;color:var(--navy);font-size:13px}
+.brand h1{font-size:15px;margin:0}
+.brand span{font-size:11px;color:#BFD9F0}
+.hdr-right{display:flex;align-items:center;gap:8px;font-size:12px;color:#BFD9F0}
+.hdr-right button{background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.25);padding:6px 10px;border-radius:8px;font-size:12px}
+nav{background:var(--navy-2);display:flex;gap:2px;padding:0 10px;overflow-x:auto;position:sticky;top:0;z-index:40}
+nav button{background:transparent;border:none;color:#CFE1F2;padding:12px 14px;font-size:13.5px;border-bottom:3px solid transparent;white-space:nowrap}
+nav button.active{color:#fff;border-bottom-color:var(--accent);font-weight:600}
+nav .badge{background:var(--red);color:#fff;border-radius:10px;padding:1px 6px;font-size:11px;margin-left:4px}
+main{flex:1;padding:14px 16px 70px;max-width:1400px;width:100%;margin:0 auto}
+h2{font-size:17px;margin:2px 0 12px;color:var(--navy)}
+h3{font-size:14px;margin:0 0 8px;color:var(--navy)}
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);padding:14px}
+.muted{color:var(--muted)} .small{font-size:12px} .right{text-align:right} .bold{font-weight:700}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.spread{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.btn{border:1px solid var(--border);background:#fff;color:var(--text);padding:10px 14px;border-radius:8px;font-weight:600;min-height:42px}
+.btn.primary{background:var(--navy);border-color:var(--navy);color:#fff}
+.btn.accent{background:var(--accent);border-color:var(--accent);color:#06203a}
+.btn.green{background:var(--green);border-color:var(--green);color:#fff}
+.btn.danger{background:#fff;border-color:var(--red);color:var(--red)}
+.btn.sm{padding:6px 10px;min-height:32px;font-size:12.5px}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.pill{display:inline-block;padding:2px 8px;border-radius:20px;font-size:11.5px;font-weight:600}
+.pill.green{background:var(--green-soft);color:var(--green)} .pill.amber{background:var(--amber-soft);color:var(--amber)}
+.pill.red{background:var(--red-soft);color:var(--red)} .pill.gray{background:var(--gray-soft);color:var(--muted)} .pill.blue{background:var(--accent-soft);color:var(--navy-3)}
+.grid{display:grid;gap:10px}
+.tables{grid-template-columns:repeat(auto-fill,minmax(110px,1fr))}
+.tbl{border:2px solid var(--border);background:#fff;border-radius:var(--radius);padding:12px 8px;text-align:center;min-height:86px}
+.tbl .n{font-size:20px;font-weight:800;color:var(--navy)}
+.tbl.busy{border-color:var(--amber);background:var(--amber-soft)}
+.tbl.special{border-style:dashed;border-color:var(--accent);background:var(--accent-soft)}
+.order-layout{display:grid;grid-template-columns:1fr 360px;gap:14px;align-items:start}
+.cats{display:flex;gap:6px;overflow-x:auto;padding-bottom:8px}
+.cats button{border:1px solid var(--border);background:#fff;border-radius:20px;padding:8px 14px;white-space:nowrap;font-weight:600;color:var(--muted)}
+.cats button.active{background:var(--navy);border-color:var(--navy);color:#fff}
+.items{grid-template-columns:repeat(auto-fill,minmax(140px,1fr))}
+.item{border:1px solid var(--border);background:#fff;border-radius:var(--radius);padding:10px;text-align:left;min-height:74px;display:flex;flex-direction:column;justify-content:space-between}
+.item:active{background:var(--accent-soft)}
+.item .nm{font-weight:600;line-height:1.25}
+.item .pr{color:var(--navy-3);font-weight:700;font-size:13px;margin-top:6px}
+.item.out{opacity:.45}
+.cart{position:sticky;top:56px}
+.line{display:flex;justify-content:space-between;gap:8px;padding:7px 0;border-bottom:1px dashed var(--border)}
+.line .q{display:flex;align-items:center;gap:6px}
+.qbtn{width:30px;height:30px;border-radius:8px;border:1px solid var(--border);background:#fff;font-weight:700}
+.voided{text-decoration:line-through;color:var(--muted)}
+.total-row{display:flex;justify-content:space-between;padding:4px 0}
+.total-row.big{font-size:18px;font-weight:800;color:var(--navy);border-top:2px solid var(--navy);margin-top:6px;padding-top:8px}
+.kds{grid-template-columns:repeat(auto-fill,minmax(230px,1fr))}
+.ticket{border-top:5px solid var(--accent)}
+.ticket.late{border-top-color:var(--red)} .ticket.ready{border-top-color:var(--green);opacity:.85}
+.ticket ul{margin:8px 0;padding:0;list-style:none}
+.ticket li{padding:4px 0;border-bottom:1px dashed var(--border);font-size:15px}
+.ticket li b{display:inline-block;min-width:28px}
+.note{font-size:12px;color:var(--amber);font-style:italic}
+.cash-layout{display:grid;grid-template-columns:340px 1fr;gap:14px;align-items:start}
+.bill{display:block;width:100%;text-align:left;border:1px solid var(--border);background:#fff;border-radius:8px;padding:10px;margin-bottom:6px}
+.bill.sel{border-color:var(--navy);background:var(--accent-soft)}
+.paygrid{grid-template-columns:repeat(auto-fill,minmax(130px,1fr))}
+table.t{width:100%;border-collapse:collapse}
+table.t th{font-size:11.5px;text-transform:uppercase;letter-spacing:.4px;color:var(--muted);text-align:left;padding:6px 8px;border-bottom:1px solid var(--border)}
+table.t td{padding:7px 8px;border-bottom:1px solid var(--border);vertical-align:top}
+table.t .right{text-align:right}
+.kpis{grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
+.kpi .v{font-size:20px;font-weight:800;color:var(--navy)} .kpi .l{font-size:11.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px}
+.two{grid-template-columns:1fr 1fr}
+.modal-bg{position:fixed;inset:0;background:rgba(11,42,74,.45);display:flex;align-items:center;justify-content:center;z-index:100;padding:14px}
+.modal{background:#fff;border-radius:12px;padding:18px;width:100%;max-width:440px;max-height:90vh;overflow:auto}
+.modal label{display:block;font-size:12px;font-weight:600;color:var(--muted);margin:10px 0 4px}
+.toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--navy);color:#fff;padding:10px 16px;border-radius:8px;z-index:200;box-shadow:var(--shadow);max-width:92vw}
+.toast.err{background:var(--red)}
+.login{max-width:360px;margin:8vh auto 0}
+.banner{background:var(--amber-soft);color:#7a5410;border:1px solid #ecd9ae;border-radius:8px;padding:9px 12px;margin-bottom:12px;font-size:13px}
+.sticky-bar{display:none}
+#printArea{display:none}
+@media (max-width:860px){
+  .order-layout,.cash-layout,.two{grid-template-columns:1fr}
+  .cart{position:static}
+  main{padding:10px 10px 90px}
+  .sticky-bar{display:flex;position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid var(--border);padding:8px 10px;gap:8px;z-index:60}
+  .sticky-bar .btn{flex:1}
+  .hide-m{display:none}
+}
+@media print{
+  body{background:#fff}
+  #app,.modal-bg,.toast{display:none !important}
+  #printArea{display:block;color:#000;font-family:"Courier New",monospace;font-size:12px;line-height:1.3}
+  #printArea .p{width:var(--pw,72mm);padding:2mm 1mm 8mm}
+  #printArea .c{text-align:center} #printArea .b{font-weight:700} #printArea .xl{font-size:18px;font-weight:700}
+  #printArea .l{font-size:15px} #printArea hr{border:0;border-top:1px dashed #000;margin:4px 0}
+  #printArea .r{display:flex;justify-content:space-between;gap:6px} #printArea .r span:last-child{text-align:right;white-space:nowrap}
+  #printArea table{width:100%;border-collapse:collapse;font-size:11px} #printArea td,#printArea th{text-align:left;padding:1px 2px} #printArea .n{text-align:right}
+  @page{margin:0}
+}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div id="printArea"></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script>
+/* ============================= CONFIG ============================= */
+const SUPABASE_URL = "https://tfdsunhhtmpjdlikozzf.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_NDXlrG9D4nlbRrjGcDcrGQ_8RSS-b3V";
+const OUTLET_ID = "marina";
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+/* ============================= I18N ============================= */
+const T = {
+  order:['Order','Pesanan'], kitchen:['Kitchen','Dapur'], cashier:['Cashier','Kasir'], reports:['Reports','Laporan'], menu:['Menu','Menu'], settings:['Settings','Pengaturan'],
+  login:['Sign in','Masuk'], staff:['Staff','Staf'], pin:['PIN','PIN'], wrong_pin:['Incorrect PIN','PIN salah'], logout:['Sign out','Keluar'],
+  tables:['Tables','Meja'], table:['Table','Meja'], takeaway:['Takeaway','Bungkus'], room_service:['Room service','Layanan kamar'], dine_in:['Dine in','Makan di tempat'],
+  free:['Free','Kosong'], new_order:['New order','Pesanan baru'], pax:['Guests','Jumlah tamu'], room:['Room','Kamar'], guest:['Guest','Tamu'],
+  search:['Search menu…','Cari menu…'], all:['All','Semua'], sold_out:['Sold out','Habis'], cart_empty:['No items yet. Tap a menu item to add it.','Belum ada item. Ketuk menu untuk menambah.'],
+  new_items:['New items','Item baru'], sent_items:['Sent to kitchen','Sudah dikirim'], note:['Note','Catatan'], add_note:['Note','Catatan'],
+  send:['Send to kitchen','Kirim ke dapur'], pay:['Pay','Bayar'], back:['Back','Kembali'], subtotal:['Subtotal','Subtotal'], discount:['Discount','Diskon'],
+  tax_incl:['Incl. tax (PBJT)','Termasuk pajak (PBJT)'], tax:['Tax (PBJT)','Pajak (PBJT)'], total:['Total','Total'], paid:['Paid','Dibayar'], due:['Balance due','Sisa tagihan'],
+  sent_ok:['Order sent','Pesanan terkirim'], bar:['Bar','Bar'], ready:['Ready','Siap'], done:['Served','Diantar'], no_tickets:['No orders waiting.','Tidak ada pesanan menunggu.'],
+  autoprint:['Print kitchen tickets on this device','Cetak tiket dapur di perangkat ini'], open_bills:['Open bills','Tagihan terbuka'], closed_today:['Closed today','Selesai hari ini'],
+  select_bill:['Select a bill on the left.','Pilih tagihan di sebelah kiri.'], no_open:['No open bills.','Tidak ada tagihan terbuka.'], payments:['Payments','Pembayaran'],
+  charge_room:['Charge to room','Tagih ke kamar'], cash:['Cash','Tunai'], amount:['Amount','Jumlah'], tendered:['Cash received','Uang diterima'], change:['Change','Kembalian'],
+  exact:['Exact','Uang pas'], ref:['Reference / last 4 digits','Referensi / 4 digit terakhir'], confirm:['Confirm','Konfirmasi'], cancel:['Cancel','Batal'], save:['Save','Simpan'],
+  print_receipt:['Print receipt','Cetak struk'], print_bill:['Print bill','Cetak tagihan'], reprint_kitchen:['Reprint kitchen ticket','Cetak ulang tiket dapur'],
+  void_item:['Void item','Batalkan item'], void_order:['Void bill','Batalkan tagihan'], reason:['Reason','Alasan'], manager_pin:['Manager PIN','PIN Manajer'],
+  need_manager:['Manager approval is required.','Perlu persetujuan manajer.'], add_items:['Add items','Tambah item'], change_table:['Change table','Pindah meja'],
+  shift:['Shift','Shift'], open_shift:['Open shift','Buka shift'], close_shift:['Close shift','Tutup shift'], opening_cash:['Opening cash','Kas awal'],
+  counted_cash:['Cash counted','Kas dihitung'], expected_cash:['Expected cash','Kas seharusnya'], difference:['Difference','Selisih'],
+  no_shift:['Open a shift before taking payments.','Buka shift sebelum menerima pembayaran.'], shift_open_since:['Shift open since','Shift dibuka sejak'],
+  inhouse:['In-house guests','Tamu menginap'], no_inhouse:['No checked-in guests found in the PMS.','Tidak ada tamu check-in di PMS.'], room_ok:['Charged to room','Ditagihkan ke kamar'],
+  reverse:['Reverse','Batalkan'], from:['From','Dari'], to:['To','Sampai'], show:['Show','Tampilkan'], export_csv:['Export CSV','Ekspor CSV'], print_report:['Print report','Cetak laporan'],
+  bills:['Bills','Tagihan'], avg_bill:['Average bill','Rata-rata tagihan'], gross:['Gross sales','Penjualan kotor'], net:['Net sales','Penjualan bersih'],
+  by_method:['By payment method','Per metode pembayaran'], by_category:['By category','Per kategori'], by_item:['Items sold','Item terjual'], voids:['Voids','Pembatalan'],
+  room_charges:['Room charges','Tagihan kamar'], qty:['Qty','Jml'], name:['Name','Nama'], category:['Category','Kategori'], price:['Price','Harga'], station:['Station','Bagian'],
+  add_category:['Add category','Tambah kategori'], add_item:['Add item','Tambah item'], edit:['Edit','Ubah'], del:['Delete','Hapus'], import_menu:['Import menu','Impor menu'],
+  import_hint:['One item per line: Category | Item name | Price | kitchen or bar','Satu item per baris: Kategori | Nama item | Harga | kitchen atau bar'],
+  name_id:['Name (Indonesian)','Nama (Indonesia)'], available:['Available','Tersedia'], add_table:['Add table','Tambah meja'], label:['Label','Label'],
+  outlet:['Outlet','Outlet'], address:['Address','Alamat'], phone:['Phone','Telepon'], tax_rate:['Tax rate %','Tarif pajak %'], prices_incl:['Menu prices already include tax','Harga menu sudah termasuk pajak'],
+  pay_methods:['Payment methods (comma separated)','Metode pembayaran (pisahkan dengan koma)'], footer:['Receipt footer','Catatan kaki struk'], room_charge_on:['Allow charge to room','Izinkan tagih ke kamar'],
+  device:['This device','Perangkat ini'], paper:['Receipt paper width','Lebar kertas struk'], auto_receipt:['Print receipt automatically when a bill is paid','Cetak struk otomatis saat lunas'],
+  print_on_send:['Print kitchen ticket here when I send an order','Cetak tiket dapur di sini saat saya kirim pesanan'], saved:['Saved','Tersimpan'], empty_menu:['The menu is empty. A manager can add items in the Menu tab.','Menu masih kosong. Manajer dapat menambah item di tab Menu.'],
+  open_now:['Still open','Masih terbuka'], status:['Status','Status'], by:['By','Oleh'], date:['Date','Tanggal'], method:['Method','Metode'], time:['Time','Waktu'],
+  conn_err:['Connection problem. Check the internet and try again.','Koneksi bermasalah. Periksa internet lalu coba lagi.'], language:['Bahasa','English'],
+  percent:['Percent','Persen'], rupiah:['Rupiah','Rupiah'], type:['Type','Jenis'], kitchen_st:['Kitchen','Dapur'], bill_paid:['Bill paid','Tagihan lunas'], reprint:['REPRINT','CETAK ULANG'],
+  credit_name:['Name of who owes (piutang)','Nama yang berhutang (piutang)'],
+  not_receipt:['NOT A RECEIPT','BUKAN BUKTI BAYAR'], shifts:['Shifts','Shift'], opened:['Opened','Dibuka'], closed:['Closed','Ditutup'], has_payments:['Reverse the payments first.','Batalkan pembayaran terlebih dahulu.']
+};
+const L = () => (S.lang==='id'?1:0);
+const t = k => (T[k]?T[k][L()]:k);
+
+/* ============================= STATE ============================= */
+const LS = { get(k,d){ try{ const v=localStorage.getItem('pos_'+k); return v==null?d:JSON.parse(v);}catch(e){return d;} }, set(k,v){ try{ localStorage.setItem('pos_'+k, JSON.stringify(v)); }catch(e){} } };
+const S = {
+  lang: LS.get('lang','id'), session:null, tab:'order', staffList:[], loginError:'',
+  outlet:null, cats:[], items:[], tables:[],
+  orders:[], oitems:[], payments:[], tickets:[], closed:[], shift:null,
+  draft:null, cat:'all', q:'', sel:null, selData:null, kStation: LS.get('kStation','all'),
+  rep:null, repFrom:null, repTo:null, modal:null, busy:false, offline:false,
+  dev:{ paper: LS.get('paper',80), autoKitchen: LS.get('autoKitchen',false), autoReceipt: LS.get('autoReceipt',true), printOnSend: LS.get('printOnSend',false) }
+};
+const TABS = { manager:['order','kitchen','cashier','reports','menu','settings'], fnb:['order','kitchen','cashier','reports','menu','settings'], frontdesk:['order','cashier'] };
+
+/* ============================= HELPERS ============================= */
+const esc = s => String(s==null?'':s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const money = n => 'Rp ' + Math.round(n||0).toLocaleString('id-ID');
+const num = n => Math.round(n||0).toLocaleString('id-ID');
+const pad = n => (n<10?'0':'')+n;
+const bizDate = () => new Date(Date.now()+8*3600e3).toISOString().slice(0,10);
+const wita = iso => { const d=new Date(new Date(iso).getTime()+8*3600e3); return pad(d.getUTCHours())+':'+pad(d.getUTCMinutes()); };
+const witaFull = iso => { const d=new Date(new Date(iso).getTime()+8*3600e3); return d.toISOString().slice(0,10)+' '+pad(d.getUTCHours())+':'+pad(d.getUTCMinutes()); };
+const minsAgo = iso => Math.max(0, Math.floor((Date.now()-new Date(iso).getTime())/60000));
+const isMgr = () => S.session && S.session.role==='manager';
+const typeLabel = o => o.type==='dine_in' ? (t('table')+' '+o.table_label) : o.type==='takeaway' ? t('takeaway') : (t('room')+' '+o.room_number);
+const itemName = it => (S.lang==='id' && it.name_id) ? it.name_id : it.name;
+const catName = c => (S.lang==='id' && c.name_id) ? c.name_id : c.name;
+function toast(msg, err){ const d=document.createElement('div'); d.className='toast'+(err?' err':''); d.textContent=msg; document.body.appendChild(d); setTimeout(()=>d.remove(), err?4500:2200); }
+function fail(e){ console.error(e); toast((e && e.message && !/fetch|network/i.test(e.message)) ? e.message : t('conn_err'), true); }
+
+/* ============================= DATA LAYER ============================= */
+async function ensureAuth(){
+  const { data:{ session } } = await sb.auth.getSession();
+  if(!session){ const { error } = await sb.auth.signInAnonymously(); if(error) throw error; }
+}
+const db = {
+  async list(table, f, order){
+    let q = sb.from(table).select('*');
+    for(const [k,v] of Object.entries(f||{})) q = Array.isArray(v) ? q.in(k,v) : q.eq(k,v);
+    if(order) q = q.order(order[0], { ascending: order[1]!==false });
+    const { data, error } = await q; if(error) throw error; return data||[];
+  },
+  async listIn(table, col, ids, f){
+    let out=[]; for(let i=0;i<ids.length;i+=40) out = out.concat(await db.list(table, Object.assign({[col]:ids.slice(i,i+40)}, f||{})));
+    return out;
+  },
+  async insert(table, rows){ const { data, error } = await sb.from(table).insert(rows).select(); if(error) throw error; return data||[]; },
+  async update(table, id, patch){ const { data, error } = await sb.from(table).update(patch).eq('id', id).select(); if(error) throw error; return (data||[])[0]; },
+  async remove(table, id){ const { error } = await sb.from(table).delete().eq('id', id); if(error) throw error; },
+  async claimTicket(id){ const { data, error } = await sb.from('pos_tickets').update({ printed_at:new Date().toISOString() }).eq('id', id).is('printed_at', null).select(); if(error) throw error; return (data||[]).length>0; },
+  async rpc(fn, args){ const { data, error } = await sb.rpc(fn, args||{}); if(error) throw error; return data; }
+};
+
+async function loadCore(){
+  const [o, c, i, tb] = await Promise.all([
+    db.list('pos_outlets', { id:OUTLET_ID }), db.list('pos_categories', { outlet_id:OUTLET_ID }, ['sort']),
+    db.list('pos_items', { outlet_id:OUTLET_ID }, ['sort']), db.list('pos_tables', { outlet_id:OUTLET_ID }, ['sort'])
+  ]);
+  S.outlet = o[0]; S.cats = c; S.items = i; S.tables = tb;
+}
+let refreshing = false, refreshAgain = false;
+async function refreshLive(){
+  if(!S.session) return;
+  if(refreshing){ refreshAgain = true; return; }
+  refreshing = true;
+  try{
+    const [open, tickets, shifts, today] = await Promise.all([
+      db.list('pos_orders', { outlet_id:OUTLET_ID, status:'open' }, ['opened_at']),
+      db.list('pos_tickets', { outlet_id:OUTLET_ID, status:['new','ready'] }, ['created_at']),
+      db.list('pos_shifts', { outlet_id:OUTLET_ID }, ['opened_at', false]),
+      db.list('pos_orders', { outlet_id:OUTLET_ID, business_date:bizDate() }, ['opened_at', false])
+    ]);
+    const tOrderIds = [...new Set(tickets.map(x=>x.order_id))];
+    const ids = [...new Set(open.map(o=>o.id).concat(tOrderIds))];
+    const [oi, pays] = await Promise.all([ ids.length?db.listIn('pos_order_items','order_id',ids):[], open.length?db.listIn('pos_payments','order_id',open.map(o=>o.id)):[] ]);
+    const known = new Map(open.concat(today).map(o=>[o.id,o]));
+    const missing = tOrderIds.filter(id=>!known.has(id));
+    if(missing.length) (await db.listIn('pos_orders','id',missing)).forEach(o=>known.set(o.id,o));
+    S.orders = open; S.tickets = tickets; S.oitems = oi; S.payments = pays; S.orderMap = known;
+    S.closed = today.filter(o=>o.status!=='open');
+    S.shift = shifts.find(s=>!s.closed_at) || null;
+    S.offline = false;
+    if(S.sel && S.selData && S.orders.find(o=>o.id===S.sel)) await loadSel(S.sel, true);
+    softRender();
+    autoPrintKitchen();
+  }catch(e){ console.error(e); S.offline = true; softRender(); }
+  finally{ refreshing = false; if(refreshAgain){ refreshAgain=false; refreshLive(); } }
+}
+let rtTimer=null, channel=null, pollTimer=null, recTimer=null;
+function startLive(){
+  if(channel) return;
+  const bump = () => { clearTimeout(rtTimer); rtTimer = setTimeout(refreshLive, 350); };
+  channel = sb.channel('pos_live')
+    .on('postgres_changes', { event:'*', schema:'public', table:'pos_tickets' }, bump)
+    .on('postgres_changes', { event:'*', schema:'public', table:'pos_orders' }, bump)
+    .on('postgres_changes', { event:'*', schema:'public', table:'pos_order_items' }, bump)
+    .subscribe();
+  pollTimer = setInterval(refreshLive, 15000);
+  recTimer = setInterval(reconcile, 5*60000);
+  document.addEventListener('visibilitychange', ()=>{ if(document.visibilityState==='visible') refreshLive(); });
+}
+function stopLive(){ if(channel){ sb.removeChannel(channel); channel=null; } clearInterval(pollTimer); clearInterval(recTimer); }
+async function reconcile(){ if(!S.session || !S.outlet || !S.outlet.room_charge_enabled) return; try{ await db.rpc('pos_reconcile_room_charges'); }catch(e){ console.error('reconcile', e); } }
+
+/* ============================= TOTALS ============================= */
+function calcTotals(items, discount){
+  const subtotal = items.filter(i=>!i.voided).reduce((s,i)=>s+i.price*i.qty,0);
+  const disc = Math.min(Math.max(discount||0,0), subtotal);
+  const rate = Number(S.outlet.tax_rate)||0;
+  let tax, total;
+  if(S.outlet.tax_inclusive){ total = subtotal-disc; tax = Math.round(total*rate/(100+rate)); }
+  else { tax = Math.round((subtotal-disc)*rate/100); total = subtotal-disc+tax; }
+  return { subtotal, discount:disc, tax, total };
+}
+const itemsOf = id => S.oitems.filter(i=>i.order_id===id);
+const paidOf = id => S.payments.filter(p=>p.order_id===id && !p.voided).reduce((s,p)=>s+p.amount,0);
+async function saveTotals(orderId, discount, extra){
+  const its = await db.list('pos_order_items', { order_id:orderId });
+  const o = S.orders.find(x=>x.id===orderId) || (S.selData && S.selData.order);
+  const tt = calcTotals(its, discount==null ? (o?o.discount:0) : discount);
+  return db.update('pos_orders', orderId, Object.assign(tt, extra||{}));
+}
+
+/* ============================= MODAL ============================= */
+function ask(cfg){
+  return new Promise(resolve=>{
+    S.modal = { cfg, resolve };
+    renderModal();
+  });
+}
+function renderModal(){
+  let bg = document.getElementById('modalBg');
+  if(!S.modal){ if(bg) bg.remove(); return; }
+  if(!bg){ bg = document.createElement('div'); bg.id='modalBg'; bg.className='modal-bg'; document.body.appendChild(bg); }
+  const c = S.modal.cfg;
+  bg.innerHTML = `<div class="modal" role="dialog" aria-modal="true"><h3>${esc(c.title)}</h3>${c.html||''}
+    ${(c.fields||[]).map(f=>`<label for="m_${f.id}">${esc(f.label)}</label>${
+      f.type==='select' ? `<select id="m_${f.id}">${f.options.map(o=>`<option value="${esc(o[0])}" ${String(o[0])===String(f.value)?'selected':''}>${esc(o[1])}</option>`).join('')}</select>`
+      : f.type==='textarea' ? `<textarea id="m_${f.id}" rows="${f.rows||6}" placeholder="${esc(f.placeholder||'')}">${esc(f.value||'')}</textarea>`
+      : f.type==='checkbox' ? `<input type="checkbox" id="m_${f.id}" style="width:auto" ${f.value?'checked':''}>`
+      : `<input id="m_${f.id}" type="${f.type||'text'}" ${f.type==='number'||f.type==='password'?'inputmode="numeric"':''} value="${esc(f.value==null?'':f.value)}" placeholder="${esc(f.placeholder||'')}" autocomplete="off">`}`).join('')}
+    <div class="row" style="margin-top:16px;justify-content:flex-end">
+      <button class="btn" onclick="closeModal(null)">${t('cancel')}</button>
+      ${c.noOk?'':`<button class="btn primary" id="mOk" onclick="okModal()">${esc(c.ok||t('confirm'))}</button>`}
+    </div></div>`;
+  const first = bg.querySelector('input,select,textarea'); if(first && !c.noFocus) setTimeout(()=>first.focus(), 30);
+  bg.onkeydown = e => { if(e.key==='Escape') closeModal(null); if(e.key==='Enter' && e.target.tagName!=='TEXTAREA' && !c.noOk){ e.preventDefault(); okModal(); } };
+}
+function okModal(){
+  const c = S.modal.cfg, out = {};
+  (c.fields||[]).forEach(f=>{ const el=document.getElementById('m_'+f.id); out[f.id] = f.type==='checkbox' ? el.checked : f.type==='number' ? (parseInt(String(el.value).replace(/[^\d-]/g,''))||0) : el.value.trim(); });
+  closeModal(out);
+}
+function closeModal(v){ const m=S.modal; S.modal=null; renderModal(); if(m) m.resolve(v); }
+async function managerApproval(){
+  if(isMgr()) return S.session.name;
+  const r = await ask({ title:t('need_manager'), fields:[{ id:'pin', label:t('manager_pin'), type:'password' }] });
+  if(!r) return null;
+  try{ const n = await db.rpc('pos_check_manager_pin', { p_pin:r.pin }); if(!n){ toast(t('wrong_pin'), true); return null; } return n; }catch(e){ fail(e); return null; }
+}
+
+/* ============================= RENDER ============================= */
+function softRender(){
+  if(S.modal) return;
+  const a = document.activeElement;
+  if(a && ['INPUT','TEXTAREA','SELECT'].includes(a.tagName)) return;
+  render();
+}
+function render(){
+  const app = document.getElementById('app');
+  if(!S.session){ app.innerHTML = renderLogin(); return; }
+  const tabs = TABS[S.session.role] || TABS.fnb;
+  const kCount = S.tickets.filter(x=>x.status==='new').length;
+  app.innerHTML = `
+  <header>
+    <div class="brand"><div class="brand-mark">POS</div><div><h1>${esc(S.outlet.name)}</h1><span>Hash Inn Marina</span></div></div>
+    <div class="hdr-right"><span class="hide-m">${esc(S.session.name)}</span>
+      <button onclick="toggleLang()">${t('language')}</button><button onclick="logout()">${t('logout')}</button></div>
+  </header>
+  <nav>${tabs.map(k=>`<button class="${S.tab===k?'active':''}" onclick="go('${k}')">${t(k)}${k==='kitchen'&&kCount?`<span class="badge">${kCount}</span>`:''}${k==='cashier'&&S.orders.length?`<span class="badge" style="background:var(--amber)">${S.orders.length}</span>`:''}</button>`).join('')}</nav>
+  <main>${S.offline?`<div class="banner">${t('conn_err')}</div>`:''}${({order:renderOrder,kitchen:renderKitchen,cashier:renderCashier,reports:renderReports,menu:renderMenu,settings:renderSettings}[S.tab])()}</main>`;
+}
+function go(tab){ S.tab = tab; if(tab==='reports' && !S.rep) loadReport(); if(tab==='cashier') reconcile(); render(); }
+function toggleLang(){ S.lang = S.lang==='id'?'en':'id'; LS.set('lang', S.lang); render(); }
+
+/* ----------------------------- LOGIN ----------------------------- */
+function renderLogin(){
+  return `<div class="login card"><div class="brand" style="margin-bottom:14px"><div class="brand-mark">POS</div><div><h2 style="margin:0">Marina Restaurant</h2><span class="muted small">Hash Inn Marina</span></div></div>
+    <label class="small muted bold" for="loginStaff">${t('staff')}</label>
+    <select id="loginStaff" style="margin:4px 0 10px">${S.staffList.map(s=>`<option value="${esc(s.id)}" ${LS.get('lastStaff','')===s.id?'selected':''}>${esc(s.name)}</option>`).join('')}</select>
+    <label class="small muted bold" for="loginPin">${t('pin')}</label>
+    <input id="loginPin" type="password" inputmode="numeric" autocomplete="off" style="margin:4px 0 10px" onkeydown="if(event.key==='Enter')login()">
+    ${S.loginError?`<div class="pill red" style="margin-bottom:10px">${esc(S.loginError)}</div>`:''}
+    <button class="btn primary" style="width:100%" onclick="login()">${t('login')}</button>
+    <div class="row" style="justify-content:center;margin-top:10px"><button class="btn sm" onclick="toggleLang()">${t('language')}</button></div></div>`;
+}
+async function login(){
+  const id = document.getElementById('loginStaff').value, pin = document.getElementById('loginPin').value;
+  LS.set('lastStaff', id);
+  try{
+    const r = await db.rpc('pos_login', { p_staff_id:id, p_pin:pin });
+    if(!r){ S.loginError = t('wrong_pin'); render(); return; }
+    S.session = r; S.loginError=''; LS.set('lastStaff', id);
+    S.tab = (TABS[r.role]||TABS.fnb)[0];
+    await loadCore(); render(); startLive(); await refreshLive();
+  }catch(e){ fail(e); }
+}
+function logout(){ S.session=null; S.draft=null; S.sel=null; S.selData=null; S.rep=null; stopLive(); render(); }
+
+/* ----------------------------- ORDER ----------------------------- */
+function renderOrder(){
+  if(S.draft) return renderDraft();
+  const busy = lbl => S.orders.find(o=>o.type==='dine_in' && o.table_label===lbl);
+  const others = S.orders.filter(o=>o.type!=='dine_in');
+  return `<h2>${t('tables')}</h2>
+  <div class="grid tables">
+    ${S.tables.filter(x=>x.active).map(tb=>{ const o=busy(tb.label); return `<button class="tbl ${o?'busy':''}" onclick="pickTable('${esc(tb.label)}')"><div class="n">${esc(tb.label)}</div>
+      ${o?`<div class="small bold">${money(o.total)}</div><div class="small muted">${minsAgo(o.opened_at)} min</div>`:`<div class="small muted">${t('free')}</div>`}</button>`; }).join('')}
+    <button class="tbl special" onclick="startDraft('takeaway')"><div class="n">＋</div><div class="small bold">${t('takeaway')}</div></button>
+    <button class="tbl special" onclick="startDraft('room_service')"><div class="n">＋</div><div class="small bold">${t('room_service')}</div></button>
+  </div>
+  ${others.length?`<h2 style="margin-top:18px">${t('takeaway')} / ${t('room_service')}</h2><div class="grid tables">${others.map(o=>`<button class="tbl busy" onclick="resumeOrder('${o.id}')"><div class="bold">${esc(typeLabel(o))}</div><div class="small">${esc(o.order_no)}</div><div class="small bold">${money(o.total)}</div></button>`).join('')}</div>`:''}`;
+}
+function pickTable(label){
+  const o = S.orders.find(x=>x.type==='dine_in' && x.table_label===label);
+  if(o) return resumeOrder(o.id);
+  startDraft('dine_in', label);
+}
+async function startDraft(type, table){
+  const d = { type, table:table||'', room:'', guest:'', booking:'', pax:1, orderId:null, lines:[] };
+  if(type==='room_service'){
+    const g = await pickGuest(); if(!g) return;
+    d.room = g.room; d.guest = g.guest; d.booking = g.booking_id;
+  } else if(type==='dine_in'){
+    const r = await ask({ title:t('table')+' '+table, fields:[{ id:'pax', label:t('pax'), type:'number', value:2 }] });
+    if(!r) return; d.pax = Math.max(1, r.pax);
+  }
+  S.draft = d; S.cat='all'; S.q=''; render();
+}
+function resumeOrder(id){
+  const o = S.orders.find(x=>x.id===id); if(!o) return;
+  S.draft = { type:o.type, table:o.table_label, room:o.room_number, guest:o.guest_name, pax:o.pax, orderId:o.id, lines:[] };
+  S.cat='all'; S.q=''; render();
+}
+function draftTitle(){ const d=S.draft; const o = d.orderId && S.orders.find(x=>x.id===d.orderId);
+  return (d.type==='dine_in'?t('table')+' '+d.table : d.type==='takeaway'?t('takeaway') : t('room')+' '+d.room+(d.guest?' · '+d.guest:'')) + (o?' · '+o.order_no:''); }
+function renderDraft(){
+  const d = S.draft, q = S.q.toLowerCase();
+  const cats = S.cats.filter(c=>c.active);
+  const list = S.items.filter(i=>i.active && (S.cat==='all'||i.category_id===S.cat) && (!q || i.name.toLowerCase().includes(q) || (i.name_id||'').toLowerCase().includes(q)));
+  const sent = d.orderId ? itemsOf(d.orderId) : [];
+  const o = d.orderId && S.orders.find(x=>x.id===d.orderId);
+  const all = sent.concat(d.lines.map(l=>({ price:l.price, qty:l.qty, voided:false })));
+  const tt = calcTotals(all, o?o.discount:0);
+  const newCount = d.lines.reduce((s,l)=>s+l.qty,0);
+  return `<div class="spread" style="margin-bottom:10px"><h2 style="margin:0">${esc(draftTitle())}</h2><button class="btn sm" onclick="leaveDraft()">← ${t('back')}</button></div>
+  <div class="order-layout">
+    <div>
+      <input placeholder="${t('search')}" value="${esc(S.q)}" oninput="S.q=this.value;renderItemsOnly()" style="margin-bottom:8px" aria-label="${t('search')}">
+      <div class="cats"><button class="${S.cat==='all'?'active':''}" onclick="S.cat='all';render()">${t('all')}</button>${cats.map(c=>`<button class="${S.cat===c.id?'active':''}" onclick="S.cat='${c.id}';render()">${esc(catName(c))}</button>`).join('')}</div>
+      <div class="grid items" id="itemGrid">${itemGridHTML(list)}</div>
+    </div>
+    <div class="card cart" id="cart">
+      ${d.lines.length?`<h3>${t('new_items')}</h3>${d.lines.map((l,i)=>`<div class="line"><div style="flex:1"><div class="bold">${esc(l.name)}</div>${l.note?`<div class="note">${esc(l.note)}</div>`:''}
+          <button class="btn sm" style="margin-top:4px" onclick="lineNote(${i})">✎ ${t('add_note')}</button></div>
+          <div><div class="q"><button class="qbtn" aria-label="-" onclick="lineQty(${i},-1)">−</button><b>${l.qty}</b><button class="qbtn" aria-label="+" onclick="lineQty(${i},1)">＋</button></div><div class="right small" style="margin-top:4px">${money(l.price*l.qty)}</div></div></div>`).join('')}`:''}
+      ${sent.length?`<h3 style="margin-top:${d.lines.length?12:0}px">${t('sent_items')}</h3>${sent.map(i=>`<div class="line ${i.voided?'voided':''}"><span>${i.qty} × ${esc(i.name)}${i.note?` <span class="note">(${esc(i.note)})</span>`:''}</span><span>${money(i.price*i.qty)}</span></div>`).join('')}`:''}
+      ${!d.lines.length&&!sent.length?`<div class="muted">${t('cart_empty')}</div>`:''}
+      <div style="margin-top:10px">
+        ${tt.discount?`<div class="total-row"><span>${t('subtotal')}</span><span>${money(tt.subtotal)}</span></div><div class="total-row"><span>${t('discount')}</span><span>− ${money(tt.discount)}</span></div>`:''}
+        ${!S.outlet.tax_inclusive&&tt.tax?`<div class="total-row"><span>${t('tax')}</span><span>${money(tt.tax)}</span></div>`:''}
+        <div class="total-row big"><span>${t('total')}</span><span>${money(tt.total)}</span></div>
+      </div>
+      <div class="row hide-m" style="margin-top:12px">
+        <button class="btn primary" style="flex:1" ${d.lines.length?'':'disabled'} onclick="sendOrder()">${t('send')}${newCount?` (${newCount})`:''}</button>
+        ${d.orderId?`<button class="btn accent" onclick="payFromDraft()">${t('pay')}</button>`:''}
+      </div>
+    </div>
+  </div>
+  <div class="sticky-bar"><button class="btn primary" ${d.lines.length?'':'disabled'} onclick="sendOrder()">${t('send')}${newCount?` (${newCount})`:''} · ${money(tt.total)}</button>${d.orderId?`<button class="btn accent" style="flex:0 0 auto" onclick="payFromDraft()">${t('pay')}</button>`:''}</div>`;
+}
+function itemGridHTML(list){
+  if(!S.items.length) return `<div class="muted">${t('empty_menu')}</div>`;
+  return list.map(i=>`<button class="item ${i.sold_out?'out':''}" ${i.sold_out?'disabled':''} onclick="addLine('${i.id}')"><span class="nm">${esc(itemName(i))}</span><span class="pr">${i.sold_out?t('sold_out'):money(i.price)}</span></button>`).join('');
+}
+function renderItemsOnly(){ const q=S.q.toLowerCase(); const list=S.items.filter(i=>i.active && (S.cat==='all'||i.category_id===S.cat) && (!q || i.name.toLowerCase().includes(q) || (i.name_id||'').toLowerCase().includes(q))); document.getElementById('itemGrid').innerHTML = itemGridHTML(list); }
+function addLine(id){
+  const it = S.items.find(x=>x.id===id); if(!it || it.sold_out) return;
+  const ex = S.draft.lines.find(l=>l.item_id===id && !l.note);
+  if(ex) ex.qty++; else { const c = S.cats.find(c=>c.id===it.category_id)||{}; S.draft.lines.push({ item_id:id, name:it.name, price:it.price, qty:1, note:'', station:c.station||'kitchen', category:c.name||'' }); }
+  render();
+}
+function lineQty(i, dlt){ const l=S.draft.lines[i]; l.qty+=dlt; if(l.qty<=0) S.draft.lines.splice(i,1); render(); }
+async function lineNote(i){ const l=S.draft.lines[i]; const r = await ask({ title:l.name, fields:[{ id:'note', label:t('note'), value:l.note, placeholder:'e.g. pedas / no ice' }], ok:t('save') }); if(r){ l.note=r.note; } render(); }
+async function leaveDraft(){ S.draft=null; render(); }
+async function sendOrder(){
+  const d = S.draft; if(!d || !d.lines.length || S.busy) return;
+  S.busy = true;
+  try{
+    let orderId = d.orderId;
+    if(!orderId){
+      const o = await db.rpc('pos_create_order', { p_outlet:OUTLET_ID, p_type:d.type, p_table:d.table, p_room:d.room, p_guest:d.guest, p_pax:d.pax, p_staff:S.session.name });
+      orderId = o.id; d.orderId = o.id;
+    }
+    const stations = [...new Set(d.lines.map(l=>l.station))];
+    const tks = await db.insert('pos_tickets', stations.map(s=>({ order_id:orderId, outlet_id:OUTLET_ID, station:s, created_by:S.session.name, printed_at: S.dev.printOnSend ? new Date().toISOString() : null })));
+    const tkBy = {}; tks.forEach(x=>tkBy[x.station]=x.id);
+    await db.insert('pos_order_items', d.lines.map(l=>({ order_id:orderId, ticket_id:tkBy[l.station], item_id:l.item_id, name:l.name, category:l.category, station:l.station, price:l.price, qty:l.qty, note:l.note, created_by:S.session.name })));
+    const lines = d.lines; d.lines = [];
+    await saveTotals(orderId);
+    toast(t('sent_ok'));
+    S.draft = null;
+    await refreshLive(); render();
+    if(S.dev.printOnSend){ const o = S.orders.find(x=>x.id===orderId); for(const tk of tks) await printHTML(kitchenTicketHTML(tk, o, lines.filter(l=>l.station===tk.station))); }
+  }catch(e){ fail(e); }
+  finally{ S.busy = false; }
+}
+function payFromDraft(){ const id=S.draft.orderId; if(S.draft.lines.length){ toast(t('send')+'?', true); return; } S.draft=null; S.tab='cashier'; selectBill(id); }
+
+/* ----------------------------- KITCHEN ----------------------------- */
+function renderKitchen(){
+  const list = S.tickets.filter(x=>S.kStation==='all'||x.station===S.kStation);
+  return `<div class="spread" style="margin-bottom:10px;flex-wrap:wrap"><h2 style="margin:0">${t('kitchen')}</h2>
+    <div class="row"><div class="cats" style="padding:0">${[['all',t('all')],['kitchen',t('kitchen_st')],['bar',t('bar')]].map(s=>`<button class="${S.kStation===s[0]?'active':''}" onclick="S.kStation='${s[0]}';LS.set('kStation','${s[0]}');render()">${s[1]}</button>`).join('')}</div></div></div>
+  <label class="row small" style="margin-bottom:10px"><input type="checkbox" style="width:auto" ${S.dev.autoKitchen?'checked':''} onchange="setDev('autoKitchen',this.checked)"> ${t('autoprint')}</label>
+  ${list.length?`<div class="grid kds">${list.map(tk=>{ const o=(S.orderMap&&S.orderMap.get(tk.order_id))||{}; const its=S.oitems.filter(i=>i.ticket_id===tk.id); const m=minsAgo(tk.created_at);
+    return `<div class="card ticket ${tk.status==='ready'?'ready':m>=15?'late':''}"><div class="spread"><b>${esc(o.order_no?typeLabel(o):'')}</b><span class="pill ${tk.status==='ready'?'green':m>=15?'red':'blue'}">${tk.status==='ready'?t('ready'):m+' min'}</span></div>
+      <div class="small muted">${esc(o.order_no||'')} · ${tk.station==='bar'?t('bar'):t('kitchen_st')} · ${wita(tk.created_at)} · ${esc(tk.created_by)}</div>
+      <ul>${its.map(i=>`<li class="${i.voided?'voided':''}"><b>${i.qty}×</b> ${esc(i.name)}${i.note?`<div class="note">${esc(i.note)}</div>`:''}</li>`).join('')}</ul>
+      <div class="row">${tk.status==='new'?`<button class="btn green" style="flex:1" onclick="ticketStatus('${tk.id}','ready')">${t('ready')}</button>`:`<button class="btn primary" style="flex:1" onclick="ticketStatus('${tk.id}','done')">${t('done')}</button>`}
+        <button class="btn sm" aria-label="${t('reprint_kitchen')}" onclick="reprintTicket('${tk.id}')">🖨</button></div></div>`; }).join('')}</div>`
+  :`<div class="card muted">${t('no_tickets')}</div>`}`;
+}
+async function ticketStatus(id, st){ try{ await db.update('pos_tickets', id, st==='ready'?{ status:st, ready_at:new Date().toISOString() }:{ status:st }); await refreshLive(); render(); }catch(e){ fail(e); } }
+async function reprintTicket(id){ const tk=S.tickets.find(x=>x.id===id); if(!tk) return; await printHTML(kitchenTicketHTML(tk, S.orderMap.get(tk.order_id), S.oitems.filter(i=>i.ticket_id===id), true)); }
+let autoPrinting = false;
+async function autoPrintKitchen(){
+  if(!S.dev.autoKitchen || autoPrinting) return;
+  autoPrinting = true;
+  try{
+    for(const tk of S.tickets.filter(x=>!x.printed_at && x.status==='new' && (S.kStation==='all'||x.station===S.kStation))){
+      const its = S.oitems.filter(i=>i.ticket_id===tk.id); if(!its.length) continue;
+      if(await db.claimTicket(tk.id)){ tk.printed_at = new Date().toISOString(); await printHTML(kitchenTicketHTML(tk, S.orderMap.get(tk.order_id), its)); }
+    }
+  }catch(e){ console.error(e); }
+  finally{ autoPrinting = false; }
+}
+
+/* ----------------------------- CASHIER ----------------------------- */
+function renderCashier(){
+  const sh = S.shift;
+  return `<div class="card spread" style="margin-bottom:12px;flex-wrap:wrap">
+    ${sh?`<div><b>${t('shift_open_since')} ${witaFull(sh.opened_at)}</b> <span class="muted">· ${esc(sh.opened_by)} · ${t('opening_cash')} ${money(sh.opening_cash)}</span></div><button class="btn sm" onclick="closeShift()">${t('close_shift')}</button>`
+        :`<div class="muted">${t('no_shift')}</div><button class="btn primary sm" onclick="openShift()">${t('open_shift')}</button>`}</div>
+  <div class="cash-layout">
+    <div><h3>${t('open_bills')} (${S.orders.length})</h3>
+      ${S.orders.length?S.orders.map(o=>{ const p=paidOf(o.id); return `<button class="bill ${S.sel===o.id?'sel':''}" onclick="selectBill('${o.id}')"><div class="spread"><b>${esc(typeLabel(o))}</b><b>${money(o.total-p)}</b></div><div class="small muted">${esc(o.order_no)} · ${wita(o.opened_at)} · ${esc(o.opened_by)}${p?` · ${t('paid')} ${money(p)}`:''}</div></button>`; }).join(''):`<div class="muted" style="margin-bottom:10px">${t('no_open')}</div>`}
+      <h3 style="margin-top:14px">${t('closed_today')} (${S.closed.length})</h3>
+      ${S.closed.slice(0,40).map(o=>`<button class="bill ${S.sel===o.id?'sel':''}" onclick="selectBill('${o.id}')"><div class="spread"><span>${esc(o.order_no)} · ${esc(typeLabel(o))}</span><span>${money(o.total)}</span></div><div class="small"><span class="pill ${o.status==='paid'?'green':'red'}">${o.status==='paid'?t('paid'):'VOID'}</span></div></button>`).join('')}
+    </div>
+    <div>${S.selData?renderBill():`<div class="card muted">${t('select_bill')}</div>`}</div>
+  </div>`;
+}
+async function loadSel(id, quiet){
+  const [o, its, pays, rcs] = await Promise.all([ db.list('pos_orders', { id }), db.list('pos_order_items', { order_id:id }, ['created_at']), db.list('pos_payments', { order_id:id }, ['created_at']), db.list('pos_room_charges', { order_id:id }) ]);
+  if(!o[0]){ S.sel=null; S.selData=null; return; }
+  S.sel = id; S.selData = { order:o[0], items:its, payments:pays, roomCharges:rcs };
+  if(!quiet) render();
+}
+async function selectBill(id){ try{ await loadSel(id); if(window.innerWidth<=860){ const el=document.getElementById('billDetail'); if(el) el.scrollIntoView({ behavior:'smooth' }); } }catch(e){ fail(e); } }
+function renderBill(){
+  const { order:o, items, payments } = S.selData;
+  const paid = payments.filter(p=>!p.voided).reduce((s,p)=>s+p.amount,0), due = o.total-paid, open = o.status==='open';
+  const methods = (S.outlet.pay_methods||[]);
+  return `<div class="card" id="billDetail">
+    <div class="spread"><div><h2 style="margin:0">${esc(typeLabel(o))} <span class="pill ${o.status==='paid'?'green':o.status==='void'?'red':'amber'}">${o.status==='paid'?t('paid'):o.status==='void'?'VOID':t('open_now')}</span></h2>
+      <div class="small muted">${esc(o.order_no)} · ${witaFull(o.opened_at)} · ${esc(o.opened_by)} · ${o.pax} pax${o.guest_name?' · '+esc(o.guest_name):''}</div></div></div>
+    <div style="margin-top:10px">${items.map(i=>`<div class="line ${i.voided?'voided':''}"><span>${i.qty} × ${esc(i.name)}${i.note?` <span class="note">(${esc(i.note)})</span>`:''}${i.voided?` <span class="small">[${esc(i.void_reason||'void')}]</span>`:''}</span>
+        <span style="white-space:nowrap">${money(i.price*i.qty)} ${open&&!i.voided?`<button class="btn sm danger" aria-label="${t('void_item')}" onclick="voidItem('${i.id}')">✕</button>`:''}</span></div>`).join('')}</div>
+    <div style="margin-top:8px">
+      <div class="total-row"><span>${t('subtotal')}</span><span>${money(o.subtotal)}</span></div>
+      ${o.discount?`<div class="total-row"><span>${t('discount')}${o.discount_note?' ('+esc(o.discount_note)+')':''}</span><span>− ${money(o.discount)}</span></div>`:''}
+      ${S.outlet.tax_inclusive?'':`<div class="total-row"><span>${t('tax')} ${Number(S.outlet.tax_rate)}%</span><span>${money(o.tax)}</span></div>`}
+      <div class="total-row big"><span>${t('total')}</span><span>${money(o.total)}</span></div>
+      ${S.outlet.tax_inclusive&&o.tax?`<div class="total-row small muted"><span>${t('tax_incl')} ${Number(S.outlet.tax_rate)}%</span><span>${money(o.tax)}</span></div>`:''}
+    </div>
+    ${payments.length?`<h3 style="margin-top:12px">${t('payments')}</h3>${payments.map(p=>`<div class="line ${p.voided?'voided':''}"><span>${esc(p.method)}${p.room_number?' '+esc(p.room_number):''}${p.ref?' · '+esc(p.ref):''} <span class="small muted">${wita(p.created_at)} · ${esc(p.received_by)}</span></span>
+        <span style="white-space:nowrap">${money(p.amount)} ${!p.voided&&o.status!=='void'?`<button class="btn sm danger" onclick="reversePayment('${p.id}')">${t('reverse')}</button>`:''}</span></div>`).join('')}`:''}
+    ${open?`<div class="total-row big" style="color:${due>0?'var(--red)':'var(--green)'}"><span>${t('due')}</span><span>${money(due)}</span></div>
+      ${due>0?(S.shift?`<div class="grid paygrid" style="margin-top:10px">${methods.map(m=>`<button class="btn ${m==='Cash'?'green':'primary'}" onclick="takePayment('${esc(m)}')">${m==='Cash'?t('cash'):esc(m)}</button>`).join('')}
+        ${S.outlet.room_charge_enabled?`<button class="btn accent" onclick="chargeRoom()">🛏 ${t('charge_room')}</button>`:''}</div>`:`<div class="banner" style="margin-top:10px">${t('no_shift')}</div>`):''}`:''}
+    <div class="row" style="margin-top:14px">
+      ${open?`<button class="btn sm" onclick="resumeFromBill()">＋ ${t('add_items')}</button><button class="btn sm" onclick="setDiscount()">% ${t('discount')}</button>${o.type==='dine_in'?`<button class="btn sm" onclick="changeTable()">⇄ ${t('change_table')}</button>`:''}
+        <button class="btn sm" onclick="printBill(false)">🖨 ${t('print_bill')}</button><button class="btn sm danger" onclick="voidOrder()">${t('void_order')}</button>`
+      :o.status==='paid'?`<button class="btn sm primary" onclick="printBill(true)">🖨 ${t('print_receipt')}</button>`:''}
+    </div></div>`;
+}
+function resumeFromBill(){ const id=S.sel; S.tab='order'; resumeOrder(id); }
+async function openShift(){
+  const r = await ask({ title:t('open_shift'), fields:[{ id:'cash', label:t('opening_cash'), type:'number', value:0 }] }); if(!r) return;
+  try{ await db.insert('pos_shifts', [{ outlet_id:OUTLET_ID, opened_by:S.session.name, opening_cash:Math.max(0,r.cash) }]); await refreshLive(); render(); }catch(e){ fail(e); }
+}
+async function closeShift(){
+  try{
+    const pays = await db.list('pos_payments', { shift_id:S.shift.id });
+    const cash = pays.filter(p=>!p.voided && p.method==='Cash').reduce((s,p)=>s+p.amount,0);
+    const expected = S.shift.opening_cash + cash;
+    const by = {}; pays.filter(p=>!p.voided).forEach(p=>by[p.method]=(by[p.method]||0)+p.amount);
+    const r = await ask({ title:t('close_shift'), html:`<table class="t">${Object.entries(by).map(([m,a])=>`<tr><td>${esc(m)}</td><td class="right">${money(a)}</td></tr>`).join('')}
+      <tr><td>${t('opening_cash')}</td><td class="right">${money(S.shift.opening_cash)}</td></tr><tr><td><b>${t('expected_cash')}</b></td><td class="right"><b>${money(expected)}</b></td></tr></table>
+      ${S.orders.length?`<div class="banner" style="margin-top:8px">${t('open_bills')}: ${S.orders.length}</div>`:''}`,
+      fields:[{ id:'counted', label:t('counted_cash'), type:'number', value:'' }, { id:'note', label:t('note'), value:'' }] });
+    if(!r) return;
+    const sh = await db.update('pos_shifts', S.shift.id, { closed_by:S.session.name, closed_at:new Date().toISOString(), expected_cash:expected, counted_cash:r.counted, note:r.note });
+    await refreshLive(); render();
+    await printHTML(shiftHTML(sh, by));
+  }catch(e){ fail(e); }
+}
+async function takePayment(method){
+  const { order:o, payments } = S.selData; const due = o.total - payments.filter(p=>!p.voided).reduce((s,p)=>s+p.amount,0);
+  const isCash = method==='Cash', isCredit = method==='Piutang';
+  if(isCredit){ const by = await managerApproval(); if(!by) return; }
+  const r = await ask({ title:(isCash?t('cash'):method)+' · '+t('due')+' '+money(due),
+    html: isCash?`<div class="row" style="margin-bottom:4px">${[due, ...[20000,50000,100000,150000,200000].filter(v=>v>due)].slice(0,5).map((v,i)=>`<button class="btn sm" onclick="document.getElementById('m_tendered').value=${v}">${i===0?t('exact'):num(v)}</button>`).join('')}</div>`:'',
+    fields: isCash ? [{ id:'tendered', label:t('tendered'), type:'number', value:due }] : [{ id:'amount', label:t('amount'), type:'number', value:due }, { id:'ref', label:isCredit?t('credit_name'):t('ref'), value:'' }] });
+  if(!r) return;
+  if(isCredit && !r.ref){ toast(t('credit_name')+'?', true); return; }
+  let amount, tendered=null, change=null;
+  if(isCash){ if(r.tendered<=0) return; tendered=r.tendered; amount=Math.min(tendered,due); change=tendered-amount; }
+  else { amount = r.amount; if(amount<=0 || amount>due){ toast(t('amount')+'?', true); return; } }
+  try{
+    await db.insert('pos_payments', [{ order_id:o.id, outlet_id:OUTLET_ID, business_date:bizDate(), shift_id:S.shift.id, method, amount, tendered, change, ref:r.ref||'', received_by:S.session.name }]);
+    await afterPayment(o, due-amount, change);
+  }catch(e){ fail(e); }
+}
+async function afterPayment(o, remaining, change){
+  if(remaining<=0) await db.update('pos_orders', o.id, { status:'paid', closed_by:S.session.name, closed_at:new Date().toISOString() });
+  await loadSel(o.id, true); await refreshLive(); render();
+  if(remaining<=0){ toast(t('bill_paid')+(change?` · ${t('change')} ${money(change)}`:'')); if(S.dev.autoReceipt) await printBill(true); }
+}
+async function pickGuest(){
+  let list; try{ list = await db.rpc('pos_inhouse'); }catch(e){ fail(e); return null; }
+  if(!list || !list.length){ toast(t('no_inhouse'), true); return null; }
+  window._guests = list;
+  return ask({ title:t('inhouse'), noOk:true, noFocus:true,
+    html:`<input placeholder="${t('room')} / ${t('guest')}" oninput="filterGuests(this.value)" aria-label="${t('search')}" style="margin-bottom:8px"><div id="guestList">${guestListHTML(list)}</div>` });
+}
+function guestListHTML(list){ return list.map(g=>`<button class="bill" onclick="closeModal(window._guests.find(x=>x.booking_id==='${esc(g.booking_id)}'))"><div class="spread"><b>${t('room')} ${esc(g.room)}</b><span class="small muted">C/O ${esc(g.check_out||'')}</span></div><div>${esc(g.guest)}</div></button>`).join(''); }
+function filterGuests(q){ q=q.toLowerCase(); document.getElementById('guestList').innerHTML = guestListHTML(window._guests.filter(g=>String(g.room).toLowerCase().includes(q)||String(g.guest).toLowerCase().includes(q))); }
+async function chargeRoom(){
+  const { order:o, payments } = S.selData; const due = o.total - payments.filter(p=>!p.voided).reduce((s,p)=>s+p.amount,0);
+  const g = await pickGuest(); if(!g) return;
+  const r = await ask({ title:t('charge_room')+' '+g.room, html:`<div><b>${esc(g.guest)}</b></div><div class="muted small">${esc(o.order_no)} · ${esc(typeLabel(o))}</div>`, fields:[{ id:'amount', label:t('amount'), type:'number', value:due }] });
+  if(!r) return; if(r.amount<=0 || r.amount>due){ toast(t('amount')+'?', true); return; }
+  try{
+    const res = await db.rpc('pos_post_room_charge', { p_order_id:o.id, p_booking_id:g.booking_id, p_amount:r.amount, p_staff:S.session.name, p_shift_id:S.shift?S.shift.id:null });
+    toast(`${t('room_ok')} ${res.room}`);
+    await loadSel(o.id, true); await refreshLive(); render();
+    if(res.paid_in_full && S.dev.autoReceipt) await printBill(true);
+  }catch(e){ fail(e); }
+}
+async function reversePayment(id){
+  const p = S.selData.payments.find(x=>x.id===id); if(!p) return;
+  const by = await managerApproval(); if(!by) return;
+  const r = await ask({ title:t('reverse')+' · '+p.method+' '+money(p.amount), fields:[{ id:'reason', label:t('reason'), value:'' }] }); if(!r || !r.reason){ if(r) toast(t('reason')+'?', true); return; }
+  try{
+    if(p.method==='Room'){
+      const rc = S.selData.roomCharges.find(x=>x.payment_id===id);
+      await db.rpc('pos_reverse_room_charge', { p_charge_id:rc.id, p_reason:r.reason, p_staff:by });
+    } else {
+      await db.update('pos_payments', id, { voided:true, void_reason:r.reason+' ('+by+')' });
+      if(S.selData.order.status==='paid') await db.update('pos_orders', S.selData.order.id, { status:'open', closed_by:null, closed_at:null });
+    }
+    await loadSel(S.sel, true); await refreshLive(); render();
+  }catch(e){ fail(e); }
+}
+async function voidItem(id){
+  const it = S.selData.items.find(x=>x.id===id); if(!it) return;
+  const by = await managerApproval(); if(!by) return;
+  const r = await ask({ title:t('void_item')+' · '+it.qty+' × '+it.name, fields:[{ id:'reason', label:t('reason'), value:'' }] }); if(!r || !r.reason){ if(r) toast(t('reason')+'?', true); return; }
+  try{
+    await db.update('pos_order_items', id, { voided:true, void_reason:r.reason, voided_by:by });
+    const o = await saveTotals(S.sel);
+    const paid = S.selData.payments.filter(p=>!p.voided).reduce((s,p)=>s+p.amount,0);
+    if(paid>0 && paid>=o.total) await db.update('pos_orders', o.id, { status:'paid', closed_by:S.session.name, closed_at:new Date().toISOString() });
+    await loadSel(S.sel, true); await refreshLive(); render();
+  }catch(e){ fail(e); }
+}
+async function voidOrder(){
+  const { order:o, payments } = S.selData;
+  if(payments.some(p=>!p.voided)){ toast(t('has_payments'), true); return; }
+  const by = await managerApproval(); if(!by) return;
+  const r = await ask({ title:t('void_order')+' · '+o.order_no, fields:[{ id:'reason', label:t('reason'), value:'' }] }); if(!r || !r.reason){ if(r) toast(t('reason')+'?', true); return; }
+  try{
+    await db.update('pos_orders', o.id, { status:'void', void_reason:r.reason, closed_by:by, closed_at:new Date().toISOString() });
+    for(const tk of S.tickets.filter(x=>x.order_id===o.id)) await db.update('pos_tickets', tk.id, { status:'done' });
+    await loadSel(o.id, true); await refreshLive(); render();
+  }catch(e){ fail(e); }
+}
+async function setDiscount(){
+  const o = S.selData.order;
+  const by = await managerApproval(); if(!by) return;
+  const r = await ask({ title:t('discount'), fields:[{ id:'kind', label:t('type'), type:'select', value:'rp', options:[['rp',t('rupiah')],['pct',t('percent')]] }, { id:'val', label:t('amount'), type:'number', value:o.discount||0 }, { id:'note', label:t('reason'), value:o.discount_note||'' }] });
+  if(!r) return;
+  const disc = r.kind==='pct' ? Math.round(o.subtotal*Math.min(r.val,100)/100) : r.val;
+  try{ await saveTotals(o.id, disc, { discount_note:(r.note||'')+(r.note?' · ':'')+by }); await loadSel(o.id, true); await refreshLive(); render(); }catch(e){ fail(e); }
+}
+async function changeTable(){
+  const o = S.selData.order;
+  const free = S.tables.filter(x=>x.active && !S.orders.find(y=>y.type==='dine_in' && y.table_label===x.label));
+  if(!free.length) return;
+  const r = await ask({ title:t('change_table'), fields:[{ id:'tb', label:t('table'), type:'select', value:free[0].label, options:free.map(x=>[x.label,x.label]) }] }); if(!r) return;
+  try{ await db.update('pos_orders', o.id, { table_label:r.tb }); await loadSel(o.id, true); await refreshLive(); render(); }catch(e){ fail(e); }
+}
+async function printBill(isReceipt){ const d=S.selData; if(!d) return; await printHTML(receiptHTML(d.order, d.items, d.payments, isReceipt)); }
+
+/* ----------------------------- REPORTS ----------------------------- */
+async function loadReport(){
+  S.repFrom = S.repFrom || bizDate(); S.repTo = S.repTo || S.repFrom;
+  try{ S.rep = await db.rpc('pos_report', { p_outlet:OUTLET_ID, p_from:S.repFrom, p_to:S.repTo }); }catch(e){ fail(e); }
+  render();
+}
+function renderReports(){
+  const r = S.rep;
+  const head = `<div class="spread" style="margin-bottom:10px;flex-wrap:wrap"><h2 style="margin:0">${t('reports')}</h2>
+    <div class="row"><input type="date" aria-label="${t('from')}" value="${S.repFrom||bizDate()}" onchange="S.repFrom=this.value" style="width:auto"><input type="date" aria-label="${t('to')}" value="${S.repTo||bizDate()}" onchange="S.repTo=this.value" style="width:auto">
+    <button class="btn primary sm" onclick="if(S.repTo<S.repFrom)S.repTo=S.repFrom;loadReport()">${t('show')}</button><button class="btn sm" onclick="exportCSV()">${t('export_csv')}</button><button class="btn sm" onclick="printHTML(reportHTML(S.rep))">🖨 ${t('print_report')}</button></div></div>`;
+  if(!r) return head + `<div class="card muted">…</div>`;
+  const s = r.summary, net = s.total - s.tax;
+  const tbl = (cols, rows) => `<table class="t"><thead><tr>${cols.map(c=>`<th class="${c[1]?'right':''}">${c[0]}</th>`).join('')}</tr></thead><tbody>${rows.length?rows.map(row=>`<tr>${row.map((v,i)=>`<td class="${cols[i][1]?'right':''}">${v}</td>`).join('')}</tr>`).join(''):`<tr><td colspan="${cols.length}" class="muted">—</td></tr>`}</tbody></table>`;
+  return head + `
+  <div class="grid kpis" style="margin-bottom:12px">
+    ${[[t('total'),money(s.total)],[t('bills'),num(s.bills)],[t('avg_bill'),money(s.bills?s.total/s.bills:0)],[t('pax'),num(s.pax)],[t('discount'),money(s.discount)],[t('tax')+' '+Number(S.outlet.tax_rate)+'%',money(s.tax)],[t('net'),money(net)],[t('open_now'),`${r.open.bills} · ${money(r.open.total)}`]]
+      .map(k=>`<div class="card kpi"><div class="l">${k[0]}</div><div class="v">${k[1]}</div></div>`).join('')}
+  </div>
+  <div class="grid two">
+    <div class="card"><h3>${t('by_method')}</h3>${tbl([[t('method')],[t('qty'),1],[t('amount'),1]], r.by_method.map(m=>[esc(m.method),m.count,money(m.amount)]))}</div>
+    <div class="card"><h3>${t('by_category')}</h3>${tbl([[t('category')],[t('qty'),1],[t('amount'),1]], r.by_category.map(m=>[esc(m.category||'—'),m.qty,money(m.amount)]))}</div>
+    <div class="card"><h3>${t('by_item')}</h3>${tbl([[t('name')],[t('qty'),1],[t('amount'),1]], r.by_item.map(m=>[esc(m.name),m.qty,money(m.amount)]))}</div>
+    <div><div class="card" style="margin-bottom:10px"><h3>${t('room_charges')}</h3>${tbl([[t('bills')],[t('room')],[t('guest')],[t('amount'),1]], r.room_charges.map(m=>[esc(m.order_no),esc(m.room),esc(m.guest)+(m.status==='reversed'?' <span class="pill red">'+t('reverse')+'</span>':''),money(m.amount)]))}</div>
+      <div class="card" style="margin-bottom:10px"><h3>${t('voids')}</h3>${tbl([[t('bills')],[t('name')],[t('reason')],[t('amount'),1]], r.void_orders.map(v=>[esc(v.order_no),'<b>'+t('void_order')+'</b>',esc(v.reason)+' · '+esc(v.by),money(v.total)]).concat(r.void_items.map(v=>[esc(v.order_no),v.qty+' × '+esc(v.name),esc(v.reason)+' · '+esc(v.by),money(v.amount)])))}</div>
+      <div class="card"><h3>${t('shifts')}</h3>${tbl([[t('opened')],[t('closed')],[t('expected_cash'),1],[t('counted_cash'),1],[t('difference'),1]], r.shifts.map(x=>[witaFull(x.opened_at)+'<br><span class="small muted">'+esc(x.opened_by)+'</span>', x.closed_at?witaFull(x.closed_at)+'<br><span class="small muted">'+esc(x.closed_by)+'</span>':t('open_now'), x.closed_at?money(x.expected_cash):'—', x.closed_at?money(x.counted_cash):'—', x.closed_at?money(x.counted_cash-x.expected_cash):'—']))}</div></div>
+  </div>
+  <div class="card" style="margin-top:12px;overflow-x:auto"><h3>${t('bills')}</h3>${tbl([[t('bills')],[t('date')],[t('type')],[t('pax'),1],[t('subtotal'),1],[t('discount'),1],[t('total'),1],[t('method')],[t('status')]], r.bills.map(b=>[esc(b.order_no),b.date,esc(b.type==='dine_in'?t('table')+' '+b.table:b.type==='takeaway'?t('takeaway'):t('room')+' '+b.room),b.pax,num(b.subtotal),num(b.discount),num(b.total),esc(b.methods||''),b.status]))}</div>`;
+}
+function exportCSV(){
+  const r = S.rep; if(!r) return;
+  const q = v => '"'+String(v==null?'':v).replace(/"/g,'""')+'"';
+  const rows = [];
+  const sec = (title, cols, data) => { rows.push([title]); rows.push(cols); data.forEach(d=>rows.push(d)); rows.push([]); };
+  const s = r.summary;
+  sec(`${S.outlet.name} — ${r.from} to ${r.to}`, ['Bills','Guests','Gross','Discount','Total','Tax portion','Net of tax'], [[s.bills,s.pax,s.gross,s.discount,s.total,s.tax,s.total-s.tax]]);
+  sec('By payment method', ['Method','Count','Amount'], r.by_method.map(m=>[m.method,m.count,m.amount]));
+  sec('By category', ['Category','Qty','Amount'], r.by_category.map(m=>[m.category,m.qty,m.amount]));
+  sec('Items sold', ['Item','Category','Qty','Amount'], r.by_item.map(m=>[m.name,m.category,m.qty,m.amount]));
+  sec('Room charges', ['Bill','Room','Guest','Amount','Status','By'], r.room_charges.map(m=>[m.order_no,m.room,m.guest,m.amount,m.status,m.by]));
+  sec('Voided bills', ['Bill','Total','Reason','By'], r.void_orders.map(m=>[m.order_no,m.total,m.reason,m.by]));
+  sec('Voided items', ['Bill','Item','Qty','Amount','Reason','By'], r.void_items.map(m=>[m.order_no,m.name,m.qty,m.amount,m.reason,m.by]));
+  sec('Shifts', ['Opened by','Opened at','Opening cash','Closed by','Closed at','Expected cash','Counted cash','Note'], r.shifts.map(x=>[x.opened_by,x.opened_at,x.opening_cash,x.closed_by,x.closed_at,x.expected_cash,x.counted_cash,x.note]));
+  sec('Bills', ['Bill','Date','Type','Table','Room','Guests','Subtotal','Discount','Tax','Total','Status','Methods','Opened by','Closed by'], r.bills.map(b=>[b.order_no,b.date,b.type,b.table,b.room,b.pax,b.subtotal,b.discount,b.tax,b.total,b.status,b.methods,b.opened_by,b.closed_by]));
+  const csv = '﻿' + rows.map(row=>row.map(q).join(',')).join('\r\n');
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type:'text/csv;charset=utf-8' }));
+  a.download = `marina-restaurant-${r.from}${r.to!==r.from?'_'+r.to:''}.csv`; document.body.appendChild(a); a.click(); a.remove();
+}
+
+/* ----------------------------- MENU ----------------------------- */
+function renderMenu(){
+  const m = isMgr();
+  return `<div class="spread" style="margin-bottom:10px;flex-wrap:wrap"><h2 style="margin:0">${t('menu')}</h2>${m?`<div class="row"><button class="btn sm primary" onclick="editCat()">＋ ${t('add_category')}</button><button class="btn sm primary" onclick="editItem()">＋ ${t('add_item')}</button><button class="btn sm" onclick="importMenu()">${t('import_menu')}</button></div>`:''}</div>
+  ${!S.cats.length?`<div class="card muted">${t('empty_menu')}</div>`:''}
+  ${S.cats.map(c=>`<div class="card" style="margin-bottom:10px"><div class="spread"><h3 style="margin:0">${esc(c.name)}${c.name_id?` <span class="muted">/ ${esc(c.name_id)}</span>`:''} <span class="pill ${c.station==='bar'?'blue':'gray'}">${c.station==='bar'?t('bar'):t('kitchen_st')}</span></h3>${m?`<button class="btn sm" onclick="editCat('${c.id}')">${t('edit')}</button>`:''}</div>
+    <table class="t" style="margin-top:6px"><tbody>${S.items.filter(i=>i.active && i.category_id===c.id).map(i=>`<tr><td>${esc(i.name)}${i.name_id?`<div class="small muted">${esc(i.name_id)}</div>`:''}</td><td class="right">${money(i.price)}</td>
+      <td class="right" style="white-space:nowrap"><button class="btn sm ${i.sold_out?'danger':''}" onclick="toggleSoldOut('${i.id}')">${i.sold_out?t('sold_out'):t('available')}</button>${m?` <button class="btn sm" onclick="editItem('${i.id}')">${t('edit')}</button>`:''}</td></tr>`).join('')||`<tr><td class="muted">—</td></tr>`}</tbody></table></div>`).join('')}
+  ${m?`<div class="card"><div class="spread"><h3 style="margin:0">${t('tables')}</h3><button class="btn sm primary" onclick="addTable()">＋ ${t('add_table')}</button></div><div class="row" style="margin-top:8px">${S.tables.map(x=>`<span class="pill blue" style="font-size:13px;padding:6px 10px">${esc(x.label)} <button class="btn sm danger" style="min-height:22px;padding:0 6px;margin-left:4px" aria-label="${t('del')} ${esc(x.label)}" onclick="delTable('${x.id}')">✕</button></span>`).join('')}</div></div>`:''}`;
+}
+async function toggleSoldOut(id){ const i=S.items.find(x=>x.id===id); try{ await db.update('pos_items', id, { sold_out:!i.sold_out }); await loadCore(); render(); }catch(e){ fail(e); } }
+async function editCat(id){
+  const c = id ? S.cats.find(x=>x.id===id) : { name:'', name_id:'', station:'kitchen', sort:(S.cats.length+1)*10 };
+  const r = await ask({ title:id?t('edit'):t('add_category'), ok:t('save'), fields:[{ id:'name', label:t('name'), value:c.name }, { id:'name_id', label:t('name_id'), value:c.name_id }, { id:'station', label:t('station'), type:'select', value:c.station, options:[['kitchen',t('kitchen_st')],['bar',t('bar')]] }, { id:'sort', label:'Sort', type:'number', value:c.sort }].concat(id?[{ id:'del', label:t('del')+' ('+t('category')+')', type:'checkbox', value:false }]:[]) });
+  if(!r || !r.name) return;
+  try{
+    if(id && r.del){ if(S.items.some(i=>i.category_id===id)){ toast(t('del')+': '+t('by_item')+' > 0', true); return; } await db.remove('pos_categories', id); }
+    else if(id) await db.update('pos_categories', id, { name:r.name, name_id:r.name_id, station:r.station, sort:r.sort });
+    else await db.insert('pos_categories', [{ outlet_id:OUTLET_ID, name:r.name, name_id:r.name_id, station:r.station, sort:r.sort }]);
+    await loadCore(); render();
+  }catch(e){ fail(e); }
+}
+async function editItem(id){
+  if(!S.cats.length){ toast(t('add_category'), true); return; }
+  const i = id ? S.items.find(x=>x.id===id) : { name:'', name_id:'', price:'', category_id:S.cats[0].id, active:true };
+  const r = await ask({ title:id?t('edit'):t('add_item'), ok:t('save'), fields:[{ id:'name', label:t('name'), value:i.name }, { id:'name_id', label:t('name_id'), value:i.name_id }, { id:'price', label:t('price'), type:'number', value:i.price }, { id:'cat', label:t('category'), type:'select', value:i.category_id, options:S.cats.map(c=>[c.id,c.name]) }].concat(id?[{ id:'del', label:t('del'), type:'checkbox', value:false }]:[]) });
+  if(!r || !r.name) return;
+  try{
+    if(id && r.del) await db.update('pos_items', id, { active:false });
+    else if(id) await db.update('pos_items', id, { name:r.name, name_id:r.name_id, price:Math.max(0,r.price), category_id:r.cat });
+    else await db.insert('pos_items', [{ outlet_id:OUTLET_ID, name:r.name, name_id:r.name_id, price:Math.max(0,r.price), category_id:r.cat, sort:S.items.length+1 }]);
+    await loadCore(); render();
+  }catch(e){ fail(e); }
+}
+function parseMenuText(txt){
+  const out = [];
+  txt.split(/\r?\n/).forEach(line=>{ const p = line.split(/\s*[|\t;]\s*/).map(x=>x.trim()); if(p.length<3 || !p[0] || !p[1]) return;
+    const price = parseInt(p[2].replace(/[^\d]/g,'')); if(isNaN(price)) return;
+    out.push({ category:p[0], name:p[1], price, station:/bar|minum|drink/i.test(p[3]||'')?'bar':'kitchen' }); });
+  return out;
+}
+async function importMenu(){
+  const r = await ask({ title:t('import_menu'), ok:t('import_menu'), html:`<div class="small muted">${t('import_hint')}</div>`, fields:[{ id:'txt', label:'', type:'textarea', rows:10, placeholder:'Makanan | Nasi Goreng | 25000 | kitchen\nMinuman | Es Teh | 8000 | bar' }] });
+  if(!r) return; const rows = parseMenuText(r.txt); if(!rows.length){ toast('0', true); return; }
+  try{
+    const catId = {}; S.cats.forEach(c=>catId[c.name.toLowerCase()]=c.id);
+    let sort = S.cats.length;
+    for(const name of [...new Set(rows.map(x=>x.category))]) if(!catId[name.toLowerCase()]){
+      const st = rows.find(x=>x.category===name).station;
+      const c = await db.insert('pos_categories', [{ outlet_id:OUTLET_ID, name, station:st, sort:(++sort)*10 }]); catId[name.toLowerCase()] = c[0].id; }
+    let n = S.items.length;
+    await db.insert('pos_items', rows.map(x=>({ outlet_id:OUTLET_ID, category_id:catId[x.category.toLowerCase()], name:x.name, price:x.price, sort:++n })));
+    await loadCore(); render(); toast(`${rows.length} ✓`);
+  }catch(e){ fail(e); }
+}
+async function addTable(){ const r = await ask({ title:t('add_table'), fields:[{ id:'label', label:t('label'), value:'' }] }); if(!r || !r.label) return; try{ await db.insert('pos_tables', [{ outlet_id:OUTLET_ID, label:r.label, sort:S.tables.length+1 }]); await loadCore(); render(); }catch(e){ fail(e); } }
+async function delTable(id){ try{ await db.remove('pos_tables', id); await loadCore(); render(); }catch(e){ fail(e); } }
+
+/* ----------------------------- SETTINGS ----------------------------- */
+function renderSettings(){
+  const o = S.outlet, m = isMgr();
+  return `<h2>${t('settings')}</h2><div class="grid two">
+  <div class="card"><h3>${t('device')}</h3>
+    <label class="small muted bold" for="sPaper">${t('paper')}</label><select id="sPaper" onchange="setDev('paper',parseInt(this.value))" style="margin:4px 0 10px"><option value="80" ${S.dev.paper===80?'selected':''}>80 mm</option><option value="58" ${S.dev.paper===58?'selected':''}>58 mm</option></select>
+    <label class="row" style="margin-bottom:8px"><input type="checkbox" style="width:auto" ${S.dev.autoReceipt?'checked':''} onchange="setDev('autoReceipt',this.checked)"> ${t('auto_receipt')}</label>
+    <label class="row" style="margin-bottom:8px"><input type="checkbox" style="width:auto" ${S.dev.autoKitchen?'checked':''} onchange="setDev('autoKitchen',this.checked)"> ${t('autoprint')}</label>
+    <label class="row"><input type="checkbox" style="width:auto" ${S.dev.printOnSend?'checked':''} onchange="setDev('printOnSend',this.checked)"> ${t('print_on_send')}</label></div>
+  ${m?`<div class="card"><h3>${t('outlet')}</h3>
+    <label class="small muted bold" for="oName">${t('name')}</label><input id="oName" value="${esc(o.name)}" style="margin:4px 0 8px">
+    <label class="small muted bold" for="oAddr">${t('address')}</label><input id="oAddr" value="${esc(o.address)}" style="margin:4px 0 8px">
+    <label class="small muted bold" for="oPhone">${t('phone')}</label><input id="oPhone" value="${esc(o.phone)}" style="margin:4px 0 8px">
+    <label class="small muted bold" for="oTax">${t('tax_rate')}</label><input id="oTax" type="number" value="${Number(o.tax_rate)}" style="margin:4px 0 8px">
+    <label class="row" style="margin-bottom:8px"><input type="checkbox" id="oIncl" style="width:auto" ${o.tax_inclusive?'checked':''}> ${t('prices_incl')}</label>
+    <label class="small muted bold" for="oPay">${t('pay_methods')}</label><input id="oPay" value="${esc((o.pay_methods||[]).join(', '))}" style="margin:4px 0 8px">
+    <label class="small muted bold" for="oFoot">${t('footer')}</label><input id="oFoot" value="${esc(o.receipt_footer)}" style="margin:4px 0 8px">
+    <label class="row" style="margin-bottom:10px"><input type="checkbox" id="oRoom" style="width:auto" ${o.room_charge_enabled?'checked':''}> ${t('room_charge_on')}</label>
+    <button class="btn primary" onclick="saveOutlet()">${t('save')}</button></div>`:''}</div>`;
+}
+function setDev(k, v){ S.dev[k]=v; LS.set(k, v); if(k==='autoKitchen' && v) autoPrintKitchen(); }
+async function saveOutlet(){
+  const g = id => document.getElementById(id);
+  const methods = g('oPay').value.split(',').map(x=>x.trim()).filter(x=>x && x.toLowerCase()!=='room');
+  try{
+    await db.update('pos_outlets', OUTLET_ID, { name:g('oName').value.trim()||S.outlet.name, address:g('oAddr').value.trim(), phone:g('oPhone').value.trim(), tax_rate:Math.max(0,parseFloat(g('oTax').value)||0), tax_inclusive:g('oIncl').checked, pay_methods:methods.length?methods:['Cash'], receipt_footer:g('oFoot').value.trim(), room_charge_enabled:g('oRoom').checked });
+    await loadCore(); render(); toast(t('saved'));
+  }catch(e){ fail(e); }
+}
+
+/* ============================= PRINTING ============================= */
+function printHTML(html){
+  return new Promise(resolve=>{
+    const pa = document.getElementById('printArea');
+    pa.style.setProperty('--pw', (S.dev.paper===58?'48mm':'72mm'));
+    pa.innerHTML = `<div class="p">${html}</div>`;
+    let done = false; const fin = () => { if(done) return; done=true; window.removeEventListener('afterprint', fin); resolve(); };
+    window.addEventListener('afterprint', fin); setTimeout(fin, 60000);
+    setTimeout(()=>{ try{ window.print(); }catch(e){ fin(); } }, 50);
+  });
+}
+const pr = (a,b) => `<div class="r"><span>${esc(a)}</span><span>${esc(b)}</span></div>`;
+function kitchenTicketHTML(tk, o, items, reprint){
+  o = o || {};
+  return `<div class="c b">${tk.station==='bar'?'BAR':'KITCHEN / DAPUR'}${reprint?' — '+t('reprint'):''}</div>
+    <div class="c xl">${esc(o.type==='dine_in'?'MEJA '+o.table_label:o.type==='takeaway'?'BUNGKUS':'KAMAR '+o.room_number)}</div>
+    ${pr(o.order_no||'', wita(tk.created_at))}${pr(tk.created_by, (o.pax||1)+' pax')}<hr>
+    ${items.filter(i=>!i.voided).map(i=>`<div class="l b">${i.qty} x ${esc(i.name)}</div>${i.note?`<div>&nbsp;&nbsp;** ${esc(i.note)}</div>`:''}`).join('')}<hr>`;
+}
+function receiptHTML(o, items, payments, isReceipt){
+  const out = S.outlet, live = items.filter(i=>!i.voided), pays = payments.filter(p=>!p.voided);
+  const paid = pays.reduce((s,p)=>s+p.amount,0);
+  return `<div class="c b l">${esc(out.name)}</div><div class="c">${esc(out.address)}</div><div class="c">${esc(out.phone)}</div><hr>
+    ${isReceipt?'':`<div class="c b">${t('not_receipt')}</div>`}
+    ${pr(o.order_no, witaFull(o.closed_at||new Date().toISOString()))}
+    ${pr(o.type==='dine_in'?'Meja/Table '+o.table_label:o.type==='takeaway'?'Bungkus/Takeaway':'Kamar/Room '+o.room_number, o.pax+' pax')}
+    ${pr('Kasir/Cashier', o.closed_by||S.session.name)}<hr>
+    ${live.map(i=>`<div>${esc(i.name)}</div>${pr('  '+i.qty+' x '+num(i.price), num(i.price*i.qty))}`).join('')}<hr>
+    ${pr('Subtotal', num(o.subtotal))}${o.discount?pr('Diskon/Discount', '-'+num(o.discount)):''}${out.tax_inclusive?'':pr('PBJT '+Number(out.tax_rate)+'%', num(o.tax))}
+    <div class="r b l"><span>TOTAL</span><span>Rp ${num(o.total)}</span></div>
+    ${out.tax_inclusive&&o.tax?pr('Termasuk/Incl. PBJT '+Number(out.tax_rate)+'%', num(o.tax)):''}
+    ${pays.length?'<hr>'+pays.map(p=>pr(p.method+(p.room_number?' '+p.room_number:'')+(p.method==='Piutang'&&p.ref?' - '+p.ref:''), num(p.tendered||p.amount))+(p.change?pr('Kembali/Change', num(p.change)):'')).join(''):''}
+    ${!isReceipt&&paid<o.total?pr('Sisa/Balance due', num(o.total-paid)):''}
+    ${pays.some(p=>p.method==='Room'||p.method==='Piutang')?`<br><div>Tanda tangan tamu / Guest signature:</div><br><br><div>______________________</div>`:''}
+    <hr><div class="c">${esc(out.receipt_footer||'')}</div>`;
+}
+function shiftHTML(sh, by){
+  return `<div class="c b l">${esc(S.outlet.name)}</div><div class="c b">SHIFT REPORT / LAPORAN SHIFT</div><hr>
+    ${pr('Buka/Opened', witaFull(sh.opened_at))}${pr('', sh.opened_by)}${pr('Tutup/Closed', witaFull(sh.closed_at))}${pr('', sh.closed_by)}<hr>
+    ${Object.entries(by).map(([m,a])=>pr(m, num(a))).join('')}<hr>
+    ${pr('Kas awal/Opening', num(sh.opening_cash))}${pr('Kas seharusnya/Expected', num(sh.expected_cash))}${pr('Kas dihitung/Counted', num(sh.counted_cash))}
+    <div class="r b"><span>Selisih/Difference</span><span>${num(sh.counted_cash-sh.expected_cash)}</span></div>
+    ${sh.note?`<div>${esc(sh.note)}</div>`:''}<br><div>Kasir: __________  Manager: __________</div>`;
+}
+function reportHTML(r){
+  if(!r) return ''; const s = r.summary;
+  return `<div class="c b l">${esc(S.outlet.name)}</div><div class="c b">SALES REPORT / LAPORAN PENJUALAN</div><div class="c">${r.from}${r.to!==r.from?' — '+r.to:''}</div><hr>
+    ${pr('Tagihan/Bills', num(s.bills))}${pr('Tamu/Guests', num(s.pax))}${pr('Kotor/Gross', num(s.gross))}${pr('Diskon/Discount', num(s.discount))}
+    <div class="r b l"><span>TOTAL</span><span>${num(s.total)}</span></div>${pr('PBJT '+Number(S.outlet.tax_rate)+'%', num(s.tax))}${pr('Bersih/Net', num(s.total-s.tax))}<hr>
+    <div class="b">PEMBAYARAN / PAYMENTS</div>${r.by_method.map(m=>pr(m.method+' ('+m.count+')', num(m.amount))).join('')}<hr>
+    <div class="b">KATEGORI / CATEGORIES</div>${r.by_category.map(m=>pr((m.category||'-')+' ('+m.qty+')', num(m.amount))).join('')}<hr>
+    <div class="b">ITEM</div>${r.by_item.map(m=>pr(m.qty+' x '+m.name, num(m.amount))).join('')}<hr>
+    ${r.room_charges.length?`<div class="b">KAMAR / ROOM CHARGES</div>${r.room_charges.map(m=>pr(m.room+' '+m.order_no+(m.status==='reversed'?' (REV)':''), num(m.amount))).join('')}<hr>`:''}
+    ${r.void_orders.length||r.void_items.length?`<div class="b">VOID</div>${r.void_orders.map(v=>pr(v.order_no+' '+(v.reason||''), num(v.total))).join('')}${r.void_items.map(v=>pr(v.order_no+' '+v.qty+'x '+v.name, num(v.amount))).join('')}<hr>`:''}
+    ${pr('Masih terbuka/Open', r.open.bills+' · '+num(r.open.total))}<div>${witaFull(new Date().toISOString())} · ${esc(S.session.name)}</div>`;
+}
+
+/* ============================= BOOT ============================= */
+async function boot(){
+  document.getElementById('app').innerHTML = '<div class="login card muted">Loading…</div>';
+  try{ await ensureAuth(); S.staffList = await db.rpc('pos_staff_list'); render(); }
+  catch(e){ console.error(e); document.getElementById('app').innerHTML = `<div class="login card"><div class="banner">${T.conn_err[0]} / ${T.conn_err[1]}</div><button class="btn primary" onclick="boot()">Retry</button></div>`; }
+}
+boot();
+</script>
+</body>
+</html>
